@@ -81,29 +81,53 @@ class TERModel:
         
     def _create_model(self):
         """Creates DistilBERT-based model for text emotion recognition"""
-        # Input layers
-        input_ids = tf.keras.layers.Input(shape=(self.max_length,), dtype=tf.int32, name='input_ids')
-        attention_mask = tf.keras.layers.Input(shape=(self.max_length,), dtype=tf.int32, name='attention_mask')
-        
-        # DistilBERT base
-        distilbert = TFDistilBertModel.from_pretrained('distilbert-base-uncased')
-        distilbert.trainable = True  # Fine-tune the model
-        
-        # Get BERT outputs
-        bert_outputs = distilbert(input_ids=input_ids, attention_mask=attention_mask)
-        
-        # Use the [CLS] token representation
-        cls_output = bert_outputs.last_hidden_state[:, 0, :]  # Shape: (batch_size, 768)
-        
-        # Additional layers for emotion classification
-        x = tf.keras.layers.Dense(256, activation='relu')(cls_output)
-        x = tf.keras.layers.Dropout(0.3)(x)
-        x = tf.keras.layers.Dense(64, activation='relu', name='ter_features')(x)
-        x = tf.keras.layers.Dropout(0.3)(x)
-        outputs = tf.keras.layers.Dense(self.num_classes, activation='softmax', name='ter_output')(x)
-        
-        model = tf.keras.Model(inputs=[input_ids, attention_mask], outputs=outputs)
-        return model
+        # Alternative approach: Use the pre-trained model directly for classification
+        try:
+            # Try using TFDistilBertForSequenceClassification
+            model = TFDistilBertForSequenceClassification.from_pretrained(
+                'distilbert-base-uncased',
+                num_labels=self.num_classes
+            )
+            
+            # We need to add our feature extraction layer
+            # Create a custom model that wraps the DistilBERT model
+            input_ids = tf.keras.layers.Input(shape=(self.max_length,), dtype=tf.int32, name='input_ids')
+            attention_mask = tf.keras.layers.Input(shape=(self.max_length,), dtype=tf.int32, name='attention_mask')
+            
+            # Get the DistilBERT outputs
+            outputs = model.distilbert(input_ids, attention_mask=attention_mask)
+            pooled_output = outputs.last_hidden_state[:, 0, :]  # CLS token
+            
+            # Add custom classification layers
+            x = tf.keras.layers.Dense(256, activation='relu')(pooled_output)
+            x = tf.keras.layers.Dropout(0.3)(x)
+            x = tf.keras.layers.Dense(64, activation='relu', name='ter_features')(x)
+            x = tf.keras.layers.Dropout(0.3)(x)
+            final_output = tf.keras.layers.Dense(self.num_classes, activation='softmax', name='ter_output')(x)
+            
+            custom_model = tf.keras.Model(inputs=[input_ids, attention_mask], outputs=final_output)
+            return custom_model
+            
+        except Exception as e:
+            print(f"Error creating DistilBERT model: {e}")
+            print("Falling back to simple text classification model...")
+            
+            # Fallback: Simple embedding-based model
+            input_ids = tf.keras.layers.Input(shape=(self.max_length,), dtype=tf.int32, name='input_ids')
+            attention_mask = tf.keras.layers.Input(shape=(self.max_length,), dtype=tf.int32, name='attention_mask')
+            
+            # Simple embedding approach
+            embedding = tf.keras.layers.Embedding(input_dim=30522, output_dim=128)(input_ids)
+            lstm = tf.keras.layers.LSTM(64, return_sequences=False)(embedding)
+            
+            x = tf.keras.layers.Dense(256, activation='relu')(lstm)
+            x = tf.keras.layers.Dropout(0.3)(x)
+            x = tf.keras.layers.Dense(64, activation='relu', name='ter_features')(x)
+            x = tf.keras.layers.Dropout(0.3)(x)
+            outputs = tf.keras.layers.Dense(self.num_classes, activation='softmax', name='ter_output')(x)
+            
+            model = tf.keras.Model(inputs=[input_ids, attention_mask], outputs=outputs)
+            return model
     
     def get_feature_extractor(self):
         """Returns model that outputs feature embeddings instead of predictions"""
@@ -149,19 +173,19 @@ class MultimodalEmotionFusion:
     def _create_late_fusion_model(self):
         """Late fusion: Combine predictions from both models"""
         # FER inputs
-        fer_input = layers.Input(shape=(48, 48, 1), name='image_input')
+        fer_input = tf.keras.layers.Input(shape=(48, 48, 1), name='image_input')
         
         # TER inputs
-        ter_input_ids = layers.Input(shape=(128,), dtype=tf.int32, name='text_input_ids')
-        ter_attention_mask = layers.Input(shape=(128,), dtype=tf.int32, name='text_attention_mask')
+        ter_input_ids = tf.keras.layers.Input(shape=(128,), dtype=tf.int32, name='text_input_ids')
+        ter_attention_mask = tf.keras.layers.Input(shape=(128,), dtype=tf.int32, name='text_attention_mask')
         
         # Get predictions from both models
         fer_predictions = self.fer_model.model(fer_input)
         ter_predictions = self.ter_model.model([ter_input_ids, ter_attention_mask])
         
         # Fusion layer - weighted average
-        fer_weight = layers.Dense(1, activation='sigmoid', name='fer_weight')(fer_predictions)
-        ter_weight = layers.Dense(1, activation='sigmoid', name='ter_weight')(ter_predictions)
+        fer_weight = tf.keras.layers.Dense(1, activation='sigmoid', name='fer_weight')(fer_predictions)
+        ter_weight = tf.keras.layers.Dense(1, activation='sigmoid', name='ter_weight')(ter_predictions)
         
         # Normalize weights
         total_weight = fer_weight + ter_weight
