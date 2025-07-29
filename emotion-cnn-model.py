@@ -81,53 +81,55 @@ class TERModel:
         
     def _create_model(self):
         """Creates DistilBERT-based model for text emotion recognition"""
-        # Alternative approach: Use the pre-trained model directly for classification
-        try:
-            # Try using TFDistilBertForSequenceClassification
-            model = TFDistilBertForSequenceClassification.from_pretrained(
-                'distilbert-base-uncased',
-                num_labels=self.num_classes
-            )
-            
-            # We need to add our feature extraction layer
-            # Create a custom model that wraps the DistilBERT model
-            input_ids = tf.keras.layers.Input(shape=(self.max_length,), dtype=tf.int32, name='input_ids')
-            attention_mask = tf.keras.layers.Input(shape=(self.max_length,), dtype=tf.int32, name='attention_mask')
-            
-            # Get the DistilBERT outputs
-            outputs = model.distilbert(input_ids, attention_mask=attention_mask)
-            pooled_output = outputs.last_hidden_state[:, 0, :]  # CLS token
-            
-            # Add custom classification layers
-            x = tf.keras.layers.Dense(256, activation='relu')(pooled_output)
-            x = tf.keras.layers.Dropout(0.3)(x)
-            x = tf.keras.layers.Dense(64, activation='relu', name='ter_features')(x)
-            x = tf.keras.layers.Dropout(0.3)(x)
-            final_output = tf.keras.layers.Dense(self.num_classes, activation='softmax', name='ter_output')(x)
-            
-            custom_model = tf.keras.Model(inputs=[input_ids, attention_mask], outputs=final_output)
-            return custom_model
-            
-        except Exception as e:
-            print(f"Error creating DistilBERT model: {e}")
-            print("Falling back to simple text classification model...")
-            
-            # Fallback: Simple embedding-based model
-            input_ids = tf.keras.layers.Input(shape=(self.max_length,), dtype=tf.int32, name='input_ids')
-            attention_mask = tf.keras.layers.Input(shape=(self.max_length,), dtype=tf.int32, name='attention_mask')
-            
-            # Simple embedding approach
-            embedding = tf.keras.layers.Embedding(input_dim=30522, output_dim=128)(input_ids)
-            lstm = tf.keras.layers.LSTM(64, return_sequences=False)(embedding)
-            
-            x = tf.keras.layers.Dense(256, activation='relu')(lstm)
-            x = tf.keras.layers.Dropout(0.3)(x)
-            x = tf.keras.layers.Dense(64, activation='relu', name='ter_features')(x)
-            x = tf.keras.layers.Dropout(0.3)(x)
-            outputs = tf.keras.layers.Dense(self.num_classes, activation='softmax', name='ter_output')(x)
-            
-            model = tf.keras.Model(inputs=[input_ids, attention_mask], outputs=outputs)
-            return model
+        # Create a model using TFDistilBertForSequenceClassification but modify it
+        base_model = TFDistilBertForSequenceClassification.from_pretrained(
+            'distilbert-base-uncased',
+            num_labels=self.num_classes
+        )
+        
+        # Create a custom wrapper that handles the model properly
+        class DistilBERTWrapper(tf.keras.Model):
+            def __init__(self, distilbert_model, num_classes):
+                super().__init__()
+                self.distilbert = distilbert_model.distilbert
+                self.dropout = tf.keras.layers.Dropout(0.3)
+                self.dense1 = tf.keras.layers.Dense(256, activation='relu')
+                self.dropout2 = tf.keras.layers.Dropout(0.3)
+                self.features = tf.keras.layers.Dense(64, activation='relu', name='ter_features')
+                self.dropout3 = tf.keras.layers.Dropout(0.3)
+                self.classifier = tf.keras.layers.Dense(num_classes, activation='softmax', name='ter_output')
+                
+            def call(self, inputs, training=None):
+                input_ids, attention_mask = inputs
+                
+                # Get DistilBERT outputs
+                outputs = self.distilbert(
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    training=training
+                )
+                
+                # Use CLS token (first token)
+                pooled_output = outputs.last_hidden_state[:, 0, :]
+                
+                # Apply custom layers
+                x = self.dense1(pooled_output)
+                x = self.dropout(x, training=training)
+                x = self.features(x)
+                x = self.dropout2(x, training=training) 
+                output = self.classifier(x)
+                
+                return output
+        
+        # Create the wrapper model
+        model = DistilBERTWrapper(base_model, self.num_classes)
+        
+        # Build the model with dummy inputs
+        dummy_input_ids = tf.zeros((1, self.max_length), dtype=tf.int32)
+        dummy_attention_mask = tf.ones((1, self.max_length), dtype=tf.int32)
+        _ = model([dummy_input_ids, dummy_attention_mask])
+        
+        return model
     
     def get_feature_extractor(self):
         """Returns model that outputs feature embeddings instead of predictions"""

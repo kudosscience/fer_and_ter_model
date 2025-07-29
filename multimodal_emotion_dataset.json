@@ -1,0 +1,17 @@
+[
+  {
+    "image_path": "path/to/happy_face1.jpg",
+    "text": "I'm feeling great today! Everything is going wonderfully.",
+    "emotion": "joy"
+  },
+  {
+    "image_path": "path/to/angry_face1.jpg",
+    "text": "This is absolutely unacceptable! I'm furious about this.",
+    "emotion": "anger"
+  },
+  {
+    "image_path": "path/to/sad_face1.jpg",
+    "text": "I feel so down and hopeless. Nothing seems to work out.",
+    "emotion": "sadness"
+  }
+]
