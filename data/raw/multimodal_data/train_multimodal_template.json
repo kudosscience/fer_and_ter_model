@@ -1,0 +1,38 @@
+[
+  {
+    "image_path": "data/raw/fer_images/train/joy/sample_joy_001.jpg",
+    "text": "I'm feeling absolutely wonderful today! Everything is going perfectly.",
+    "emotion": "joy",
+    "id": "multimodal_train_001"
+  },
+  {
+    "image_path": "data/raw/fer_images/train/anger/sample_anger_001.jpg", 
+    "text": "This situation makes me incredibly angry and frustrated.",
+    "emotion": "anger",
+    "id": "multimodal_train_002"
+  },
+  {
+    "image_path": "data/raw/fer_images/train/disgust/sample_disgust_001.jpg",
+    "text": "That smell is absolutely disgusting and revolting.",
+    "emotion": "disgust", 
+    "id": "multimodal_train_003"
+  },
+  {
+    "image_path": "data/raw/fer_images/train/sadness/sample_sadness_001.jpg",
+    "text": "I feel so sad and hopeless about everything right now.",
+    "emotion": "sadness",
+    "id": "multimodal_train_004"
+  },
+  {
+    "image_path": "data/raw/fer_images/train/fear/sample_fear_001.jpg",
+    "text": "I'm terrified and scared about what might happen next.",
+    "emotion": "fear",
+    "id": "multimodal_train_005"
+  },
+  {
+    "image_path": "data/raw/fer_images/train/surprise/sample_surprise_001.jpg",
+    "text": "Wow, that was completely unexpected and shocking!",
+    "emotion": "surprise",
+    "id": "multimodal_train_006"
+  }
+]
