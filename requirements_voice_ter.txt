@@ -1,0 +1,30 @@
+# Voice-based Textual Emotion Recognition Requirements
+# Core ML and NLP packages
+torch>=2.0.0
+transformers>=4.21.0
+scikit-learn>=1.0.0
+numpy>=1.21.0
+
+# Audio processing and speech recognition
+speechrecognition>=3.8.1
+pyaudio>=0.2.11
+wave>=0.0.2
+
+# Alternative speech recognition engines (optional)
+# whisper  # OpenAI Whisper for offline speech recognition
+# vosk     # Offline speech recognition
+
+# Utilities
+tqdm>=4.64.0
+pandas>=1.5.0
+
+# For Windows users: pyaudio might need to be installed via conda
+# conda install pyaudio
+
+# For Linux users: you might need to install system dependencies:
+# sudo apt-get install portaudio19-dev python3-pyaudio
+# sudo apt-get install espeak espeak-data libespeak1 libespeak-dev
+
+# For macOS users: you might need:
+# brew install portaudio
+# pip install pyaudio
