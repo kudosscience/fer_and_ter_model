@@ -84,11 +84,11 @@ FURHAT_PORT = 54321     # Default Furhat port
 # Emotion to gesture mapping for Furhat
 EMOTION_GESTURES = {
     'happy': 'BigSmile',
-    'sad': 'Frown',
-    'angry': 'Anger',
+    'sad': 'ExpressSad',
+    'angry': 'ExpressAnger',
     'surprise': 'Surprise',
-    'fear': 'Worry',
-    'disgust': 'Disgust',
+    'fear': 'ExpressFear',
+    'disgust': 'ExpressDisgust',
     'neutral': None  # No specific gesture for neutral
 }
 
@@ -296,6 +296,9 @@ class FurhatMultimodalEmotionInference:
             response = self.furhat.get_users()
             print("✅ Furhat robot connected successfully")
             
+            # Test and validate available gestures
+            self._validate_gestures()
+            
             # Set initial robot state
             self.furhat.say(text="Hello! I'm ready for emotion recognition.")
             
@@ -308,6 +311,41 @@ class FurhatMultimodalEmotionInference:
             print(f"❌ Failed to connect to Furhat robot: {str(e)}")
             print("🔧 Make sure Furhat robot is running and Remote API is enabled")
             self.furhat = None
+    
+    def _validate_gestures(self):
+        """Validate that emotion gestures are available on the robot"""
+        if self.furhat is None:
+            return
+        
+        try:
+            # Get available gestures from Furhat
+            gestures_response = self.furhat.get_gestures()
+            if gestures_response and hasattr(gestures_response, 'gestures'):
+                available_gestures = [g.name for g in gestures_response.gestures]
+                print(f"🎭 Available gestures: {len(available_gestures)}")
+                
+                # Check each emotion gesture
+                invalid_gestures = []
+                for emotion, gesture in EMOTION_GESTURES.items():
+                    if gesture and gesture not in available_gestures:
+                        invalid_gestures.append((emotion, gesture))
+                
+                if invalid_gestures:
+                    print("⚠️  Invalid gesture mappings found:")
+                    for emotion, gesture in invalid_gestures:
+                        print(f"   {emotion}: {gesture}")
+                        # Set to None to disable gestures for these emotions
+                        EMOTION_GESTURES[emotion] = None
+                    
+                    print("🔧 Disabled invalid gestures. Robot will still respond with voice.")
+                else:
+                    print("✅ All emotion gestures are valid")
+            else:
+                print("⚠️  Could not retrieve gesture list from robot")
+                
+        except Exception as e:
+            print(f"⚠️  Gesture validation failed: {e}")
+            print("🔧 Will attempt to use gestures but they may fail")
     
     def _initialize_face_detection(self):
         """Initialize face detection for robot camera"""
@@ -658,7 +696,17 @@ class FurhatMultimodalEmotionInference:
                 # Perform gesture if available
                 gesture = EMOTION_GESTURES.get(emotion)
                 if gesture:
-                    self.furhat.gesture(name=gesture)
+                    try:
+                        self.furhat.gesture(name=gesture)
+                        print(f"🤖 Executed gesture: {gesture}")
+                    except Exception as gesture_error:
+                        print(f"⚠️  Gesture '{gesture}' failed: {gesture_error}")
+                        # Try a fallback generic gesture
+                        try:
+                            self.furhat.gesture(name='Nod')
+                            print("🤖 Used fallback gesture: Nod")
+                        except:
+                            print("⚠️  No gestures available")
                 
                 # Say emotional response
                 responses = EMOTION_RESPONSES.get(emotion, ["I detected an emotion."])
@@ -669,13 +717,18 @@ class FurhatMultimodalEmotionInference:
                 color = self.emotion_colors.get(emotion, (128, 128, 128))
                 # Convert BGR to RGB for Furhat
                 r, g, b = color[2], color[1], color[0]
-                self.furhat.set_led(red=r, green=g, blue=b)
+                try:
+                    self.furhat.set_led(red=r, green=g, blue=b)
+                except Exception as led_error:
+                    print(f"⚠️  LED update failed: {led_error}")
                 
                 self.last_robot_response_time = current_time
                 print(f"🤖 Robot response: {emotion} -> {response_text}")
                 
             except Exception as e:
                 print(f"Robot response execution error: {e}")
+                # Still update the cooldown to prevent spam
+                self.last_robot_response_time = current_time
     
     def _audio_processing_thread(self):
         """Background thread for continuous audio processing using Furhat"""
