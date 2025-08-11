@@ -2,17 +2,17 @@
 """
 Furhat Multimodal Emotion Recognition System
 Combines Facial Expression Recognition (FER) and Textual Emotion Recognition (TER)
-for emotion detection using Furhat robot's camera and microphone.
+for emotion detection using device camera and Furhat robot's microphone.
 
 This script integrates:
-- Real-time facial expression recognition using Furhat's camera
+- Real-time facial expression recognition using device camera
 - Voice-based textual emotion recognition using Furhat's microphone
 - Multimodal emotion fusion and analysis
 - Furhat robot control for emotional responses
 
 Features:
-- Furhat Remote API integration
-- Simultaneous FER and TER processing using robot's sensors
+- Furhat Remote API integration for TER and robot responses
+- Device camera integration for FER processing
 - Real-time emotion fusion and confidence scoring
 - Robot emotional gestures and voice responses
 - Interactive controls for voice capture
@@ -168,6 +168,7 @@ class FurhatMultimodalEmotionInference:
                  ter_model_path: str = None,
                  device: str = 'auto',
                  furhat_ip: str = FURHAT_IP,
+                 camera_id: int = 0,
                  fusion_strategy: str = 'weighted_average',
                  enable_robot_responses: bool = True):
         """
@@ -178,6 +179,7 @@ class FurhatMultimodalEmotionInference:
             ter_model_path: Path to the TER model directory
             device: Device to use ('auto', 'cpu', 'cuda')
             furhat_ip: IP address of the Furhat robot
+            camera_id: Camera ID for device camera
             fusion_strategy: Strategy for combining emotions ('weighted_average', 'confidence_based')
             enable_robot_responses: Whether to enable robot emotional responses
         """
@@ -227,6 +229,17 @@ class FurhatMultimodalEmotionInference:
         self.face_cascade = None
         self.recognizer = None
         
+        # Camera setup for local device camera
+        self.camera_id = camera_id  # Use parameter instead of default
+        self.cap = None
+        
+        # FER preprocessing transforms
+        self.fer_transform = transforms.Compose([
+            transforms.Resize((48, 48)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5], std=[0.5])  # Normalize to [-1, 1]
+        ])
+        
         # Threading and queues for multimodal processing
         self.audio_queue = queue.Queue()
         self.prediction_queue = queue.Queue()
@@ -265,11 +278,14 @@ class FurhatMultimodalEmotionInference:
         self._initialize_furhat()
         self._initialize_face_detection()
         self._initialize_speech_recognition()
+        self._initialize_camera()  # Add camera initialization
         
         print(f"✅ Furhat Multimodal Emotion Recognition System initialized!")
         print(f"🤖 Robot IP: {self.furhat_ip}")
-        print(f"📱 Device: {self.device}")
+        print(f"� Camera ID: {self.camera_id}")
+        print(f"�📱 Device: {self.device}")
         print(f"🎭 Emotions: {', '.join(self.emotion_labels)}")
+        print(f"🔄 Fusion Strategy: {self.fusion_strategy}")
     
     def _setup_device(self, device: str) -> torch.device:
         """Setup computation device"""
@@ -431,6 +447,26 @@ class FurhatMultimodalEmotionInference:
             print(f"⚠️  Speech recognition initialization warning: {str(e)}")
             self.recognizer = None
     
+    def _initialize_camera(self):
+        """Initialize camera capture for local device camera"""
+        try:
+            self.cap = cv2.VideoCapture(self.camera_id)
+            
+            if not self.cap.isOpened():
+                raise RuntimeError(f"Failed to open camera {self.camera_id}")
+            
+            # Set camera properties for better performance
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            self.cap.set(cv2.CAP_PROP_FPS, 30)
+            
+            print(f"✅ Camera {self.camera_id} initialized successfully")
+            
+        except Exception as e:
+            print(f"❌ Camera initialization failed: {str(e)}")
+            print("⚠️  FER functionality will be limited")
+            self.cap = None
+    
     def _load_fer_model(self, model_path: str):
         """Load the FER model"""
         print("🔄 Loading FER model...")
@@ -559,22 +595,6 @@ class FurhatMultimodalEmotionInference:
         
         return tensor_img.to(self.device)
     
-    def _predict_fer_emotion(self, face_tensor):
-        """Predict emotion from face tensor"""
-        if self.fer_model is None:
-            return None, None
-        
-        with torch.no_grad():
-            outputs = self.fer_model(face_tensor)
-            probabilities = F.softmax(outputs, dim=1)
-            predicted_class = torch.argmax(probabilities, dim=1).item()
-            confidence_scores = probabilities.cpu().numpy()[0]
-        
-        # Convert FER indices to standardized emotion labels
-        fer_emotion = self.fer_emotion_labels[predicted_class]
-        
-        return fer_emotion, confidence_scores[predicted_class]
-    
     def _clean_text(self, text: str) -> str:
         """Clean and preprocess text data"""
         text = text.lower()
@@ -628,6 +648,82 @@ class FurhatMultimodalEmotionInference:
         except Exception as e:
             print(f"❌ TER prediction error: {str(e)}")
             return None, None
+    
+    def _preprocess_face(self, face_img):
+        """
+        Preprocess face image for emotion recognition
+        
+        Args:
+            face_img: OpenCV face image (grayscale or color)
+            
+        Returns:
+            torch.Tensor: Preprocessed image tensor
+        """
+        # Convert to grayscale if needed
+        if len(face_img.shape) == 3:
+            face_img = cv2.cvtColor(face_img, cv2.COLOR_BGR2GRAY)
+        
+        # Convert to PIL Image
+        pil_img = Image.fromarray(face_img)
+        
+        # Apply transforms
+        tensor_img = self.fer_transform(pil_img)
+        
+        # Add batch dimension
+        tensor_img = tensor_img.unsqueeze(0)
+        
+        return tensor_img.to(self.device)
+    
+    def _predict_fer_emotion(self, face_tensor):
+        """Predict emotion from face tensor"""
+        if self.fer_model is None:
+            return None, None
+        
+        with torch.no_grad():
+            outputs = self.fer_model(face_tensor)
+            probabilities = F.softmax(outputs, dim=1)
+            predicted_class = torch.argmax(probabilities, dim=1).item()
+            confidence_scores = probabilities.cpu().numpy()[0]
+        
+        # Convert FER indices to standardized emotion labels
+        fer_emotion = self.fer_emotion_labels[predicted_class]
+        
+        return fer_emotion, confidence_scores[predicted_class]
+    
+    def _process_camera_fer(self, frame):
+        """
+        Process camera frame for facial expression recognition
+        
+        Args:
+            frame: OpenCV camera frame
+            
+        Returns:
+            tuple: (faces, predictions) where faces is list of (x,y,w,h) and predictions is list of (emotion, confidence)
+        """
+        if self.face_cascade is None or self.fer_model is None:
+            return [], []
+        
+        # Convert to grayscale for face detection
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        
+        # Detect faces
+        faces = self.face_cascade.detectMultiScale(
+            gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30)
+        )
+        
+        predictions = []
+        for (x, y, w, h) in faces:
+            # Extract face region
+            face_roi = gray[y:y+h, x:x+w]
+            
+            # Preprocess face
+            face_tensor = self._preprocess_face(face_roi)
+            
+            # Predict emotion
+            emotion, confidence = self._predict_fer_emotion(face_tensor)
+            predictions.append((emotion, confidence))
+        
+        return faces, predictions
     
     def _fuse_emotions(self, fer_emotion: str, fer_confidence: float, 
                       ter_emotion: str, ter_confidence: float) -> Tuple[str, float]:
@@ -835,21 +931,27 @@ class FurhatMultimodalEmotionInference:
             except Exception as e:
                 print(f"Audio processing error: {e}")
     
-    def _get_furhat_camera_frame(self):
+    def _get_camera_frame(self):
         """
-        Get camera frame from Furhat robot
-        Note: This is a placeholder as Furhat Remote API doesn't directly provide camera access
-        In practice, you might need to implement this differently based on your Furhat setup
+        Get camera frame from local device camera
+        Returns:
+            numpy.ndarray or None: Camera frame if successful, None otherwise
         """
-        # For now, we'll simulate this by asking users to look at the robot
-        # In a real implementation, you might need to:
-        # 1. Use Furhat's computer vision capabilities
-        # 2. Access the robot's camera through a different API
-        # 3. Use a separate camera pointed at users
+        if self.cap is None or not self.cap.isOpened():
+            return None
         
-        # Placeholder: Return None to indicate no camera frame available
-        # Users would need to implement camera access based on their specific setup
-        return None
+        try:
+            ret, frame = self.cap.read()
+            if ret:
+                # Flip frame horizontally for mirror effect
+                frame = cv2.flip(frame, 1)
+                return frame
+            else:
+                print("⚠️  Failed to capture frame from camera")
+                return None
+        except Exception as e:
+            print(f"❌ Camera capture error: {e}")
+            return None
     
     def _update_fps(self):
         """Update FPS counter"""
@@ -1082,7 +1184,9 @@ class FurhatMultimodalEmotionInference:
             return
         
         print("🎯 Starting Furhat Multimodal Emotion Recognition...")
-        print("🤖 Using Furhat robot's sensors for multimodal emotion detection")
+        print("🤖 Using Furhat robot's microphone + device camera for multimodal emotion detection")
+        print("📷 Camera input will be used for facial expression recognition")
+        print("🎤 Furhat microphone will be used for textual emotion recognition")
         print("Press 'V' to toggle Furhat voice capture, 'Q' to quit")
         
         # Start processing threads
@@ -1100,14 +1204,31 @@ class FurhatMultimodalEmotionInference:
         
         try:
             while True:
-                # Create a black frame for display (since we're using Furhat's camera)
-                frame = np.zeros((480, 640, 3), dtype=np.uint8)
+                # Get camera frame from device camera
+                frame = self._get_camera_frame()
                 
-                # Note: In a real implementation, you would get the camera frame from Furhat
-                # For now, we'll simulate face detection and focus on TER + robot interaction
+                if frame is None:
+                    # Create a black frame as fallback if camera is not available
+                    frame = np.zeros((480, 640, 3), dtype=np.uint8)
+                    cv2.putText(frame, "Camera not available", 
+                               (50, 240), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
                 
-                # Simulate face detection (in practice, this would come from Furhat's camera)
-                # For demonstration, we'll just show the UI
+                # Process camera frame for FER
+                faces, fer_predictions = self._process_camera_fer(frame)
+                
+                # Update FER results from camera
+                if len(fer_predictions) > 0:
+                    # Take the most confident prediction if multiple faces
+                    best_prediction = max(fer_predictions, key=lambda x: x[1] if x[1] is not None else 0)
+                    self.current_fer_emotion, self.fer_confidence = best_prediction
+                else:
+                    # Fallback to neutral with low confidence if no faces detected
+                    self.current_fer_emotion = 'neutral'
+                    self.fer_confidence = 0.1
+                
+                # Draw FER predictions on frame
+                if len(faces) > 0 and len(fer_predictions) > 0:
+                    self._draw_fer_predictions(frame, faces, fer_predictions)
                 
                 # Process audio queue from Furhat microphone
                 self.current_ter_emotion = None
@@ -1131,12 +1252,7 @@ class FurhatMultimodalEmotionInference:
                     except queue.Empty:
                         break
                 
-                # For demo purposes, we'll simulate FER as neutral with low confidence
-                # In practice, this would come from processing Furhat's camera feed
-                self.current_fer_emotion = 'neutral'
-                self.fer_confidence = 0.1
-                
-                # Fusion (primarily TER-based for Furhat demo)
+                # Fusion of FER (from camera) and TER (from Furhat microphone)
                 if self.current_fer_emotion or self.current_ter_emotion:
                     self.current_fused_emotion, self.fused_confidence = self._fuse_emotions(
                         self.current_fer_emotion, self.fer_confidence,
@@ -1166,9 +1282,9 @@ class FurhatMultimodalEmotionInference:
                 # Add Furhat-specific information overlay
                 cv2.putText(frame, "FURHAT MULTIMODAL EMOTION RECOGNITION", 
                            (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 255), 2)
-                cv2.putText(frame, "Speak to Furhat when voice capture is active", 
+                cv2.putText(frame, "Camera FER + Furhat TER | Speak to robot when active", 
                            (50, 290), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
-                cv2.putText(frame, f"Robot IP: {self.furhat_ip}", 
+                cv2.putText(frame, f"Robot IP: {self.furhat_ip} | Camera: {self.camera_id}", 
                            (50, 320), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
                 
                 # Display frame
@@ -1227,6 +1343,9 @@ class FurhatMultimodalEmotionInference:
                     self.furhat.set_led(red=0, green=0, blue=0)  # Turn off LEDs
                 except:
                     pass
+            # Camera cleanup
+            if self.cap:
+                self.cap.release()
             cv2.destroyAllWindows()
             print("🔄 Cleanup completed")
 
@@ -1243,6 +1362,7 @@ Examples:
   python furhat_multimodal_emotion_inference.py --ter_model ./my_ter_model         # Custom TER model
   python furhat_multimodal_emotion_inference.py --device cpu                       # Force CPU usage
   python furhat_multimodal_emotion_inference.py --furhat_ip 192.168.1.100         # Remote Furhat robot
+  python furhat_multimodal_emotion_inference.py --camera_id 1                      # Use camera 1
   python furhat_multimodal_emotion_inference.py --fusion confidence_based          # Change fusion strategy
   python furhat_multimodal_emotion_inference.py --no_robot_responses               # Disable robot responses
         """
@@ -1277,6 +1397,13 @@ Examples:
     )
     
     parser.add_argument(
+        '--camera_id', 
+        type=int, 
+        default=0,
+        help='Camera ID for device camera (default: 0)'
+    )
+    
+    parser.add_argument(
         '--fusion', 
         choices=['weighted_average', 'confidence_based'], 
         default='confidence_based',
@@ -1294,7 +1421,7 @@ Examples:
     # Print header
     print("🤖 Furhat Multimodal Emotion Recognition System")
     print("=" * 60)
-    print("Combining FER and TER using Furhat robot's sensors")
+    print("Combining FER (device camera) and TER (Furhat microphone)")
     print("=" * 60)
     
     try:
@@ -1304,6 +1431,7 @@ Examples:
             ter_model_path=args.ter_model,
             device=args.device,
             furhat_ip=args.furhat_ip,
+            camera_id=args.camera_id,
             fusion_strategy=args.fusion,
             enable_robot_responses=not args.no_robot_responses
         )
