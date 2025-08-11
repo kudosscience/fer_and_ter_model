@@ -1,10 +1,10 @@
 # Furhat Integration Summary
 
-## What We've Created
+## What I've Created
 
-I've successfully created a complete integration of your multimodal emotion recognition system with the Furhat robot. Here's what was delivered:
+I've successfully created a complete integration of a multimodal emotion recognition system with the Furhat robot. 
 
-### 🎯 Main Files Created
+### 🎯 Main Files
 
 1. **`furhat_multimodal_emotion_inference.py`** - Main integration script
    - Complete copy of your multimodal system adapted for Furhat
