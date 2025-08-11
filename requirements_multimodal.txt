@@ -1,0 +1,52 @@
+# Requirements for Multimodal Emotion Recognition System
+# Combines FER (camera) and TER (voice) functionality
+
+# Core ML and Deep Learning
+torch>=2.0.0
+torchvision>=0.10.0
+transformers>=4.21.0
+scikit-learn>=1.0.0
+numpy>=1.21.0
+
+# Computer Vision
+opencv-python>=4.5.0
+Pillow>=8.0.0
+
+# Audio processing and speech recognition
+speechrecognition>=3.8.1
+pyaudio>=0.2.11
+wave>=0.0.2
+
+# Alternative speech recognition engines (optional)
+# whisper>=20230314  # OpenAI Whisper for offline speech recognition
+# vosk>=1.8.0        # Offline speech recognition
+
+# Utilities and data processing
+tqdm>=4.64.0
+pandas>=1.5.0
+
+# Development and utilities
+argparse  # Built-in with Python
+datetime  # Built-in with Python
+threading  # Built-in with Python
+queue  # Built-in with Python
+collections  # Built-in with Python
+
+# Optional: For better performance with CUDA
+# torch[cuda] - uncomment if you have CUDA-capable GPU
+
+# Platform-specific installation notes:
+# 
+# Windows users (pyaudio installation):
+# - Try: pip install pyaudio
+# - If that fails: conda install pyaudio
+# - Or download wheel from: https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio
+#
+# Linux users (system dependencies):
+# sudo apt-get install portaudio19-dev python3-pyaudio
+# sudo apt-get install espeak espeak-data libespeak1 libespeak-dev
+# sudo apt-get install libgl1-mesa-glx  # For OpenCV
+#
+# macOS users:
+# brew install portaudio
+# pip install pyaudio
