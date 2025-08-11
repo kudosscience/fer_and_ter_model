@@ -751,11 +751,22 @@ class MultimodalEmotionInference:
             fused = result.get('fused_emotion', 'None')
             fused_conf = result.get('fused_confidence', 0.0)
             
-            # Handle None confidence values
+            # Handle None values safely
+            if timestamp is None:
+                timestamp = 'Unknown'
+            if fer is None:
+                fer = 'None'
+            if ter is None:
+                ter = 'None'
+            if fused is None:
+                fused = 'None'
             if fused_conf is None:
                 fused_conf = 0.0
             
-            print(f"{i:2d}. [{timestamp[:19]}] FER:{fer:>8} | TER:{ter:>8} | Fused:{fused:>8} ({fused_conf:.3f})")
+            # Safely slice timestamp
+            timestamp_display = timestamp[:19] if len(str(timestamp)) >= 19 else str(timestamp)
+            
+            print(f"{i:2d}. [{timestamp_display}] FER:{fer:>8} | TER:{ter:>8} | Fused:{fused:>8} ({fused_conf:.3f})")
     
     def _show_statistics(self):
         """Show emotion statistics"""
@@ -765,9 +776,9 @@ class MultimodalEmotionInference:
         
         total = sum(self.emotion_counts.values())
         
-        print(f"\n📊 Session Statistics:")
+        print("\n📊 Session Statistics:")
         print(f"   Total Predictions: {total}")
-        print(f"\n🎭 Emotion Distribution:")
+        print("\n🎭 Emotion Distribution:")
         
         sorted_emotions = sorted(self.emotion_counts.items(), key=lambda x: x[1], reverse=True)
         
