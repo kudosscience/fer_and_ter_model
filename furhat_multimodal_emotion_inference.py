@@ -81,14 +81,14 @@ UPDATE_INTERVAL = 0.1  # Update interval in seconds
 FURHAT_IP = "localhost"  # Default Furhat IP address
 FURHAT_PORT = 54321     # Default Furhat port
 
-# Emotion to gesture mapping for Furhat
+# Emotion to gesture mapping for Furhat (will be validated and updated at runtime)
 EMOTION_GESTURES = {
     'happy': 'BigSmile',
-    'sad': 'ExpressSad',
-    'angry': 'ExpressAnger',
-    'surprise': 'Surprise',
-    'fear': 'ExpressFear',
-    'disgust': 'ExpressDisgust',
+    'sad': 'Sad',
+    'angry': 'ExpressAnger', 
+    'surprise': 'Surprised',
+    'fear': 'Worried',
+    'disgust': 'Disgusted',
     'neutral': None  # No specific gesture for neutral
 }
 
@@ -318,34 +318,98 @@ class FurhatMultimodalEmotionInference:
             return
         
         try:
-            # Get available gestures from Furhat
+            # Get available gestures from Furhat using the API
             gestures_response = self.furhat.get_gestures()
-            if gestures_response and hasattr(gestures_response, 'gestures'):
-                available_gestures = [g.name for g in gestures_response.gestures]
-                print(f"🎭 Available gestures: {len(available_gestures)}")
+            
+            if gestures_response:
+                # The response should be a list of gesture objects with 'name' and 'duration' properties
+                available_gesture_names = []
                 
-                # Check each emotion gesture
+                # Handle different response formats
+                if hasattr(gestures_response, '__iter__'):
+                    for gesture in gestures_response:
+                        if hasattr(gesture, 'name'):
+                            available_gesture_names.append(gesture.name)
+                        elif isinstance(gesture, dict) and 'name' in gesture:
+                            available_gesture_names.append(gesture['name'])
+                
+                print(f"🎭 Available gestures ({len(available_gesture_names)}): {', '.join(available_gesture_names[:10])}{'...' if len(available_gesture_names) > 10 else ''}")
+                
+                # Check each emotion gesture mapping
                 invalid_gestures = []
+                valid_gestures = []
+                
                 for emotion, gesture in EMOTION_GESTURES.items():
-                    if gesture and gesture not in available_gestures:
-                        invalid_gestures.append((emotion, gesture))
+                    if gesture:  # Skip None values
+                        if gesture in available_gesture_names:
+                            valid_gestures.append((emotion, gesture))
+                        else:
+                            invalid_gestures.append((emotion, gesture))
                 
                 if invalid_gestures:
-                    print("⚠️  Invalid gesture mappings found:")
-                    for emotion, gesture in invalid_gestures:
+                    print("⚠️  Invalid gesture mappings found, trying alternatives:")
+                    for emotion, invalid_gesture in invalid_gestures:
+                        print(f"   {emotion}: {invalid_gesture} (not available)")
+                        
+                        # Try to find alternative gestures for emotions
+                        alternative = self._find_alternative_gesture(emotion, available_gesture_names)
+                        if alternative:
+                            EMOTION_GESTURES[emotion] = alternative
+                            print(f"   → Using alternative: {alternative}")
+                        else:
+                            EMOTION_GESTURES[emotion] = None
+                            print(f"   → No alternative found, disabled gestures for {emotion}")
+                
+                if valid_gestures:
+                    print(f"✅ Valid gesture mappings:")
+                    for emotion, gesture in valid_gestures:
                         print(f"   {emotion}: {gesture}")
-                        # Set to None to disable gestures for these emotions
-                        EMOTION_GESTURES[emotion] = None
-                    
-                    print("🔧 Disabled invalid gestures. Robot will still respond with voice.")
-                else:
-                    print("✅ All emotion gestures are valid")
+                
             else:
                 print("⚠️  Could not retrieve gesture list from robot")
                 
         except Exception as e:
             print(f"⚠️  Gesture validation failed: {e}")
-            print("🔧 Will attempt to use gestures but they may fail")
+            print("🔧 Will attempt to use default gestures but they may fail")
+    
+    def _find_alternative_gesture(self, emotion: str, available_gestures: list) -> str:
+        """Find alternative gesture names for emotions based on available gestures"""
+        # Common alternative gesture mappings based on typical Furhat gesture names
+        emotion_alternatives = {
+            'happy': ['BigSmile', 'Smile', 'Happy', 'Joy', 'Pleased'],
+            'sad': ['Sad', 'Frown', 'Disappointed', 'Unhappy'],
+            'angry': ['Angry', 'Mad', 'Annoyed', 'Frustrated'],
+            'surprise': ['Surprised', 'Surprise', 'Shocked', 'Amazed'],
+            'fear': ['Worried', 'Scared', 'Afraid', 'Anxious', 'Concerned'],
+            'disgust': ['Disgusted', 'Disgust', 'Displeased'],
+            'neutral': ['Neutral', 'Calm', 'Relaxed']
+        }
+        
+        # Look for alternatives for this emotion
+        alternatives = emotion_alternatives.get(emotion, [])
+        
+        for alt in alternatives:
+            if alt in available_gestures:
+                return alt
+        
+        # If no direct alternatives found, look for partial matches
+        emotion_keywords = {
+            'happy': ['smile', 'happy', 'joy', 'pleased'],
+            'sad': ['sad', 'frown', 'down'],
+            'angry': ['angry', 'mad', 'annoyed'],
+            'surprise': ['surprise', 'shock', 'amaze'],
+            'fear': ['worry', 'fear', 'scare', 'anxious'],
+            'disgust': ['disgust', 'displease'],
+            'neutral': ['neutral', 'calm', 'relax']
+        }
+        
+        keywords = emotion_keywords.get(emotion, [])
+        for keyword in keywords:
+            for available_gesture in available_gestures:
+                if keyword.lower() in available_gesture.lower():
+                    return available_gesture
+        
+        return None
     
     def _initialize_face_detection(self):
         """Initialize face detection for robot camera"""
@@ -692,41 +756,63 @@ class FurhatMultimodalEmotionInference:
         confidence = emotion_data.get('confidence', 0.0)
         
         if emotion and confidence > CONFIDENCE_THRESHOLD:
+            response_success = False
+            
             try:
                 # Perform gesture if available
                 gesture = EMOTION_GESTURES.get(emotion)
                 if gesture:
                     try:
-                        self.furhat.gesture(name=gesture)
-                        print(f"🤖 Executed gesture: {gesture}")
+                        # Use the Furhat Remote API gesture method according to spec
+                        result = self.furhat.gesture(name=gesture, blocking=False)
+                        if hasattr(result, 'success') and result.success:
+                            print(f"🤖 Executed gesture: {gesture}")
+                        else:
+                            print(f"⚠️  Gesture '{gesture}' execution returned: {result}")
                     except Exception as gesture_error:
                         print(f"⚠️  Gesture '{gesture}' failed: {gesture_error}")
-                        # Try a fallback generic gesture
-                        try:
-                            self.furhat.gesture(name='Nod')
-                            print("🤖 Used fallback gesture: Nod")
-                        except:
-                            print("⚠️  No gestures available")
+                        # Try a simple fallback - just log the error without another gesture attempt
+                        print("🔧 Continuing without gesture...")
                 
-                # Say emotional response
-                responses = EMOTION_RESPONSES.get(emotion, ["I detected an emotion."])
-                response_text = np.random.choice(responses)
-                self.furhat.say(text=response_text)
+                # Say emotional response (this should work reliably)
+                try:
+                    responses = EMOTION_RESPONSES.get(emotion, ["I detected an emotion."])
+                    response_text = np.random.choice(responses)
+                    
+                    # Use the Furhat Remote API say method according to spec
+                    say_result = self.furhat.say(text=response_text, blocking=False)
+                    if hasattr(say_result, 'success') and say_result.success:
+                        print(f"🤖 Robot said: {response_text}")
+                        response_success = True
+                    else:
+                        print(f"⚠️  Speech failed: {say_result}")
+                        
+                except Exception as speech_error:
+                    print(f"⚠️  Speech failed: {speech_error}")
                 
                 # Update LED color based on emotion
-                color = self.emotion_colors.get(emotion, (128, 128, 128))
-                # Convert BGR to RGB for Furhat
-                r, g, b = color[2], color[1], color[0]
                 try:
-                    self.furhat.set_led(red=r, green=g, blue=b)
+                    color = self.emotion_colors.get(emotion, (128, 128, 128))
+                    # Convert BGR to RGB for Furhat (API expects red, green, blue parameters)
+                    r, g, b = color[2], color[1], color[0]
+                    
+                    led_result = self.furhat.set_led(red=r, green=g, blue=b)
+                    if hasattr(led_result, 'success') and led_result.success:
+                        print(f"🔵 LED color updated for {emotion}")
+                    else:
+                        print(f"⚠️  LED update result: {led_result}")
+                        
                 except Exception as led_error:
                     print(f"⚠️  LED update failed: {led_error}")
                 
+                # Always update cooldown if we attempted any response
                 self.last_robot_response_time = current_time
-                print(f"🤖 Robot response: {emotion} -> {response_text}")
+                
+                if response_success:
+                    print(f"🤖 Robot response completed: {emotion} (confidence: {confidence:.3f})")
                 
             except Exception as e:
-                print(f"Robot response execution error: {e}")
+                print(f"❌ Robot response execution error: {e}")
                 # Still update the cooldown to prevent spam
                 self.last_robot_response_time = current_time
     
@@ -965,10 +1051,27 @@ class FurhatMultimodalEmotionInference:
             return
         
         try:
-            # Test a happy gesture
-            self.furhat.gesture(name="BigSmile")
-            self.furhat.say(text="Testing emotion gesture!")
-            print("🤖 Gesture test executed")
+            # Test a simple gesture first
+            print("🧪 Testing robot gestures...")
+            
+            # Try BigSmile first as it's commonly available
+            test_gestures = ['BigSmile', 'Smile', 'Nod', 'Surprised']
+            
+            for gesture_name in test_gestures:
+                try:
+                    result = self.furhat.gesture(name=gesture_name, blocking=False)
+                    if hasattr(result, 'success') and result.success:
+                        print(f"✅ Gesture '{gesture_name}' executed successfully")
+                        self.furhat.say(text=f"Testing {gesture_name} gesture!", blocking=False)
+                        break
+                    else:
+                        print(f"⚠️  Gesture '{gesture_name}' failed: {result}")
+                except Exception as e:
+                    print(f"⚠️  Gesture '{gesture_name}' error: {e}")
+            else:
+                print("❌ No test gestures worked")
+                self.furhat.say(text="Gesture test completed, but no gestures worked!", blocking=False)
+                
         except Exception as e:
             print(f"❌ Gesture test failed: {e}")
     
