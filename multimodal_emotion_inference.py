@@ -511,6 +511,12 @@ class MultimodalEmotionInference:
     def _weighted_average_fusion(self, fer_emotion: str, fer_confidence: float, 
                                 ter_emotion: str, ter_confidence: float) -> Tuple[str, float]:
         """Weighted average fusion strategy"""
+        # Handle None confidence values
+        if fer_confidence is None:
+            fer_confidence = 0.0
+        if ter_confidence is None:
+            ter_confidence = 0.0
+            
         if fer_emotion is None and ter_emotion is None:
             return 'neutral', 0.0
         elif fer_emotion is None:
@@ -539,6 +545,12 @@ class MultimodalEmotionInference:
     def _confidence_based_fusion(self, fer_emotion: str, fer_confidence: float, 
                                 ter_emotion: str, ter_confidence: float) -> Tuple[str, float]:
         """Confidence-based fusion strategy"""
+        # Handle None confidence values
+        if fer_confidence is None:
+            fer_confidence = 0.0
+        if ter_confidence is None:
+            ter_confidence = 0.0
+            
         if fer_emotion is None and ter_emotion is None:
             return 'neutral', 0.0
         elif fer_emotion is None:
@@ -606,7 +618,7 @@ class MultimodalEmotionInference:
     def _draw_fer_predictions(self, frame, faces, predictions):
         """Draw FER predictions on frame"""
         for (x, y, w, h), (emotion, confidence) in zip(faces, predictions):
-            if emotion is None:
+            if emotion is None or confidence is None:
                 continue
                 
             color = self.emotion_colors[emotion]
@@ -675,13 +687,13 @@ class MultimodalEmotionInference:
                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
             
             # TER confidence
-            if self.ter_confidence > 0:
+            if self.ter_confidence is not None and self.ter_confidence > 0:
                 conf_text = f"TER Confidence: {self.ter_confidence:.2%}"
                 cv2.putText(frame, conf_text, (20, panel_y + 70), cv2.FONT_HERSHEY_SIMPLEX, 
                            0.4, (255, 255, 255), 1)
         
         # Fusion panel (bottom-right)
-        if self.current_fused_emotion:
+        if self.current_fused_emotion and self.fused_confidence is not None:
             panel_x = width - 200
             panel_y = height - 100
             cv2.rectangle(frame, (panel_x, panel_y), (width - 10, height - 10), (0, 0, 0), -1)
@@ -738,6 +750,10 @@ class MultimodalEmotionInference:
             ter = result.get('ter_emotion', 'None')
             fused = result.get('fused_emotion', 'None')
             fused_conf = result.get('fused_confidence', 0.0)
+            
+            # Handle None confidence values
+            if fused_conf is None:
+                fused_conf = 0.0
             
             print(f"{i:2d}. [{timestamp[:19]}] FER:{fer:>8} | TER:{ter:>8} | Fused:{fused:>8} ({fused_conf:.3f})")
     
