@@ -718,7 +718,8 @@ class MultimodalEmotionInference:
             "S - Save Frame",
             "T - Toggle TER Panel",
             "F - Fullscreen",
-            "H - Show History"
+            "H - Show History",
+            "P - Show Statistics"
         ]
         
         for i, control in enumerate(controls):
