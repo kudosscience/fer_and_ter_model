@@ -74,6 +74,25 @@ FUSION_WEIGHTS = {
     'textual': 0.4      # Weight for textual emotion
 }
 
+# Model performance metrics for formula-based fusion
+# These would typically be derived from validation data
+MODEL_PERFORMANCE = {
+    'fer': {
+        'accuracy': 0.73,  # Overall model accuracy
+        'recall': {        # Per-emotion recall scores
+            'angry': 0.71, 'disgust': 0.68, 'fear': 0.65, 'happy': 0.84,
+            'sad': 0.70, 'surprise': 0.75, 'neutral': 0.78
+        }
+    },
+    'ter': {
+        'accuracy': 0.79,  # Overall model accuracy  
+        'recall': {        # Per-emotion recall scores
+            'angry': 0.76, 'disgust': 0.72, 'fear': 0.69, 'happy': 0.87,
+            'sad': 0.74, 'surprise': 0.71, 'neutral': 0.82
+        }
+    }
+}
+
 CONFIDENCE_THRESHOLD = 0.3  # Minimum confidence to consider a prediction
 UPDATE_INTERVAL = 0.1  # Update interval in seconds
 
@@ -180,7 +199,7 @@ class FurhatMultimodalEmotionInference:
             device: Device to use ('auto', 'cpu', 'cuda')
             furhat_ip: IP address of the Furhat robot
             camera_id: Camera ID for device camera
-            fusion_strategy: Strategy for combining emotions ('weighted_average', 'confidence_based')
+            fusion_strategy: Strategy for combining emotions ('weighted_average', 'confidence_based', 'formula_based')
             enable_robot_responses: Whether to enable robot emotional responses
         """
         # Check Furhat availability
@@ -743,6 +762,8 @@ class FurhatMultimodalEmotionInference:
             return self._weighted_average_fusion(fer_emotion, fer_confidence, ter_emotion, ter_confidence)
         elif self.fusion_strategy == 'confidence_based':
             return self._confidence_based_fusion(fer_emotion, fer_confidence, ter_emotion, ter_confidence)
+        elif self.fusion_strategy == 'formula_based':
+            return self._formula_based_fusion(fer_emotion, fer_confidence, ter_emotion, ter_confidence)
         else:
             # Default to confidence-based
             return self._confidence_based_fusion(fer_emotion, fer_confidence, ter_emotion, ter_confidence)
@@ -805,6 +826,73 @@ class FurhatMultimodalEmotionInference:
         else:
             boost = 1.1 if fer_emotion == ter_emotion else 0.9
             return ter_emotion, min(ter_confidence * boost, 1.0)
+    
+    def _formula_based_fusion(self, fer_emotion: str, fer_confidence: float, 
+                             ter_emotion: str, ter_confidence: float) -> Tuple[str, float]:
+        """
+        Formula-based fusion strategy implementing the weighted combination formula:
+        Pi = (∑i=1 to M ∑j=1 to N pi * modj * recij) / (∑i=1 to M ∑j=1 to N modj * recij)
+        
+        Where:
+        - Pi = final prediction for emotion i
+        - M = number of distinct emotions (7 in our case)
+        - N = number of modalities (2: FER and TER)
+        - pi = prediction confidence for emotion i
+        - modj = accuracy of model j
+        - recij = recall of emotion i for model j
+        """
+        # Handle None confidence values
+        if fer_confidence is None:
+            fer_confidence = 0.0
+        if ter_confidence is None:
+            ter_confidence = 0.0
+            
+        if fer_emotion is None and ter_emotion is None:
+            return 'neutral', 0.0
+        elif fer_emotion is None:
+            return ter_emotion, ter_confidence
+        elif ter_emotion is None:
+            return fer_emotion, fer_confidence
+        
+        # Calculate fusion scores for all emotions using the formula
+        # Pi = (∑i=1 to M ∑j=1 to N pi * modj * recij) / (∑i=1 to M ∑j=1 to N modj * recij)
+        emotion_scores = {}
+        
+        for emotion in self.emotion_labels:
+            # Get prediction confidence for this emotion from each modality
+            fer_pred_conf = fer_confidence if fer_emotion == emotion else 0.0
+            ter_pred_conf = ter_confidence if ter_emotion == emotion else 0.0
+            
+            # Get model performance metrics for this specific emotion
+            fer_accuracy = MODEL_PERFORMANCE['fer']['accuracy']
+            ter_accuracy = MODEL_PERFORMANCE['ter']['accuracy']
+            fer_recall_for_emotion = MODEL_PERFORMANCE['fer']['recall'].get(emotion, 0.5)
+            ter_recall_for_emotion = MODEL_PERFORMANCE['ter']['recall'].get(emotion, 0.5)
+            
+            # Calculate weighted prediction using the corrected formula
+            # Numerator: ∑j=1 to N (pi * modj * recij) for this emotion across all modalities
+            numerator = (fer_pred_conf * fer_accuracy * fer_recall_for_emotion + 
+                        ter_pred_conf * ter_accuracy * ter_recall_for_emotion)
+            
+            # Denominator: ∑j=1 to N (modj * recij) for this emotion across all modalities
+            denominator = (fer_accuracy * fer_recall_for_emotion + ter_accuracy * ter_recall_for_emotion)
+            
+            # Calculate final prediction for this emotion
+            if denominator > 0:
+                emotion_scores[emotion] = numerator / denominator
+            else:
+                emotion_scores[emotion] = 0.0
+        
+        # Find the emotion with highest score
+        if emotion_scores:
+            best_emotion = max(emotion_scores, key=emotion_scores.get)
+            best_confidence = emotion_scores[best_emotion]
+            
+            # The confidence is already normalized by the formula, just ensure it's within [0, 1]
+            return best_emotion, min(best_confidence, 1.0)
+        else:
+            # Fallback to confidence-based fusion if formula fails
+            return self._confidence_based_fusion(fer_emotion, fer_confidence, ter_emotion, ter_confidence)
     
     def _furhat_listen(self, timeout: float = 3.0) -> Optional[str]:
         """Use Furhat robot's microphone to listen for speech"""
@@ -1364,6 +1452,7 @@ Examples:
   python furhat_multimodal_emotion_inference.py --furhat_ip 192.168.1.100         # Remote Furhat robot
   python furhat_multimodal_emotion_inference.py --camera_id 1                      # Use camera 1
   python furhat_multimodal_emotion_inference.py --fusion confidence_based          # Change fusion strategy
+  python furhat_multimodal_emotion_inference.py --fusion formula_based             # Use formula-based fusion
   python furhat_multimodal_emotion_inference.py --no_robot_responses               # Disable robot responses
         """
     )
@@ -1405,7 +1494,7 @@ Examples:
     
     parser.add_argument(
         '--fusion', 
-        choices=['weighted_average', 'confidence_based'], 
+        choices=['weighted_average', 'confidence_based', 'formula_based'], 
         default='confidence_based',
         help='Fusion strategy for combining emotions (default: confidence_based)'
     )
