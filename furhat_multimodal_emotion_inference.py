@@ -189,7 +189,9 @@ class FurhatMultimodalEmotionInference:
                  furhat_ip: str = FURHAT_IP,
                  camera_id: int = 0,
                  fusion_strategy: str = 'weighted_average',
-                 enable_robot_responses: bool = True):
+                 enable_robot_responses: bool = True,
+                 fer_response_threshold: float = 0.6,
+                 fer_stability_frames: int = 5):
         """
         Initialize the Furhat multimodal emotion recognition system
         
@@ -201,6 +203,8 @@ class FurhatMultimodalEmotionInference:
             camera_id: Camera ID for device camera
             fusion_strategy: Strategy for combining emotions ('weighted_average', 'confidence_based', 'formula_based')
             enable_robot_responses: Whether to enable robot emotional responses
+            fer_response_threshold: Minimum confidence threshold for FER-triggered robot responses
+            fer_stability_frames: Number of consecutive frames needed for stable FER emotion before robot response
         """
         # Check Furhat availability
         if not FURHAT_AVAILABLE:
@@ -274,6 +278,12 @@ class FurhatMultimodalEmotionInference:
         self.ter_confidence = 0.0
         self.fused_confidence = 0.0
         self.last_ter_text = ""
+        
+        # FER-specific robot response tracking
+        self.last_fer_emotion_response = None
+        self.fer_emotion_stable_count = 0
+        self.fer_stability_threshold = fer_stability_frames
+        self.fer_confidence_threshold = fer_response_threshold
         
         # History and statistics
         self.prediction_history = deque(maxlen=100)
@@ -927,6 +937,46 @@ class FurhatMultimodalEmotionInference:
             except Exception as e:
                 print(f"Robot response error: {e}")
     
+    def _check_fer_emotion_change(self, current_emotion: str, confidence: float) -> bool:
+        """
+        Check if there's a significant FER emotion change that should trigger robot response
+        
+        Args:
+            current_emotion: Current FER emotion
+            confidence: Confidence of current FER emotion
+            
+        Returns:
+            bool: True if robot should respond to this FER change
+        """
+        # Check confidence threshold
+        if confidence < self.fer_confidence_threshold:
+            return False
+        
+        # Check if emotion has changed
+        if current_emotion != self.last_fer_emotion_response:
+            # Reset stability counter for new emotion
+            if current_emotion != getattr(self, '_last_fer_emotion_check', None):
+                self.fer_emotion_stable_count = 0
+            
+            # Increment stability counter
+            self.fer_emotion_stable_count += 1
+            self._last_fer_emotion_check = current_emotion
+            
+            # Check if emotion has been stable for enough frames
+            if self.fer_emotion_stable_count >= self.fer_stability_threshold:
+                # Avoid neutral responses unless confidence is very high
+                if current_emotion == 'neutral' and confidence < 0.8:
+                    return False
+                
+                # Update last responded emotion
+                self.last_fer_emotion_response = current_emotion
+                return True
+        else:
+            # Same emotion, reset counter
+            self.fer_emotion_stable_count = 0
+        
+        return False
+    
     def _execute_robot_response(self, emotion_data):
         """Execute robot emotional response"""
         if not self.enable_robot_responses or self.furhat is None:
@@ -938,6 +988,7 @@ class FurhatMultimodalEmotionInference:
         
         emotion = emotion_data.get('emotion')
         confidence = emotion_data.get('confidence', 0.0)
+        source = emotion_data.get('source', 'unknown')  # Track whether from FER or TER
         
         if emotion and confidence > CONFIDENCE_THRESHOLD:
             response_success = False
@@ -962,6 +1013,21 @@ class FurhatMultimodalEmotionInference:
                 try:
                     responses = EMOTION_RESPONSES.get(emotion, ["I detected an emotion."])
                     response_text = np.random.choice(responses)
+                    
+                    # Modify response based on source
+                    if source == 'FER':
+                        # Add facial expression context to responses
+                        fer_responses = {
+                            'happy': ["I can see you're smiling!", "You look happy!", "That's a lovely smile!"],
+                            'sad': ["I notice you look sad.", "You seem a bit down.", "I can see sadness in your expression."],
+                            'angry': ["You look upset.", "I can see you're angry.", "Your expression shows frustration."],
+                            'surprise': ["You look surprised!", "What a surprised expression!", "That caught your attention!"],
+                            'fear': ["You look worried.", "I see concern in your face.", "You seem anxious."],
+                            'disgust': ["You look disgusted.", "That expression shows displeasure.", "You don't seem to like something."],
+                            'neutral': ["You look calm and composed.", "I see a neutral expression.", "You appear relaxed."]
+                        }
+                        fer_emotion_responses = fer_responses.get(emotion, responses)
+                        response_text = np.random.choice(fer_emotion_responses)
                     
                     # Use the Furhat Remote API say method according to spec
                     say_result = self.furhat.say(text=response_text, blocking=False)
@@ -993,7 +1059,7 @@ class FurhatMultimodalEmotionInference:
                 self.last_robot_response_time = current_time
                 
                 if response_success:
-                    print(f"🤖 Robot response completed: {emotion} (confidence: {confidence:.3f})")
+                    print(f"🤖 Robot response completed: {emotion} (confidence: {confidence:.3f}) [Source: {source}]")
                 
             except Exception as e:
                 print(f"❌ Robot response execution error: {e}")
@@ -1083,9 +1149,9 @@ class FurhatMultimodalEmotionInference:
         """Draw UI panels with multimodal information"""
         height, width = frame.shape[:2]
         
-        # Main info panel (top-left)
-        cv2.rectangle(frame, (10, 10), (350, 140), (0, 0, 0), -1)
-        cv2.rectangle(frame, (10, 10), (350, 140), (255, 255, 255), 2)
+        # Main info panel (top-left) - make it taller to accommodate FER response info
+        cv2.rectangle(frame, (10, 10), (350, 180), (0, 0, 0), -1)
+        cv2.rectangle(frame, (10, 10), (350, 180), (255, 255, 255), 2)
         
         # FPS and device info
         fps_text = f"FPS: {self.current_fps:.1f}"
@@ -1108,6 +1174,13 @@ class FurhatMultimodalEmotionInference:
         cv2.putText(frame, fer_text, (20, 95), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (100, 255, 100), 1)
         cv2.putText(frame, ter_text, (20, 115), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (100, 100, 255), 1)
         cv2.putText(frame, fused_text, (20, 135), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 100), 1)
+        
+        # FER Response Tracking
+        fer_response_text = f"FER Response: {self.last_fer_emotion_response or 'None'}"
+        cv2.putText(frame, fer_response_text, (20, 155), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 100, 255), 1)
+        
+        stability_text = f"Stability: {self.fer_emotion_stable_count}/{self.fer_stability_threshold}"
+        cv2.putText(frame, stability_text, (20, 175), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
         
         # TER panel (bottom-left)
         if self.show_ter_panel:
@@ -1275,6 +1348,7 @@ class FurhatMultimodalEmotionInference:
         print("🤖 Using Furhat robot's microphone + device camera for multimodal emotion detection")
         print("📷 Camera input will be used for facial expression recognition")
         print("🎤 Furhat microphone will be used for textual emotion recognition")
+        print("🎭 Robot will respond to both facial expressions and speech")
         print("Press 'V' to toggle Furhat voice capture, 'Q' to quit")
         
         # Start processing threads
@@ -1309,6 +1383,16 @@ class FurhatMultimodalEmotionInference:
                     # Take the most confident prediction if multiple faces
                     best_prediction = max(fer_predictions, key=lambda x: x[1] if x[1] is not None else 0)
                     self.current_fer_emotion, self.fer_confidence = best_prediction
+                    
+                    # Check if FER emotion change should trigger robot response
+                    if self._check_fer_emotion_change(self.current_fer_emotion, self.fer_confidence):
+                        if self.enable_robot_responses:
+                            print(f"🎭 FER emotion change detected: {self.current_fer_emotion} (confidence: {self.fer_confidence:.3f})")
+                            self.prediction_queue.put({
+                                'emotion': self.current_fer_emotion,
+                                'confidence': self.fer_confidence,
+                                'source': 'FER'
+                            })
                 else:
                     # Fallback to neutral with low confidence if no faces detected
                     self.current_fer_emotion = 'neutral'
@@ -1334,7 +1418,8 @@ class FurhatMultimodalEmotionInference:
                         if self.enable_robot_responses:
                             self.prediction_queue.put({
                                 'emotion': audio_result['emotion'],
-                                'confidence': audio_result['confidence']
+                                'confidence': audio_result['confidence'],
+                                'source': 'TER'
                             })
                         
                     except queue.Empty:
@@ -1370,9 +1455,9 @@ class FurhatMultimodalEmotionInference:
                 # Add Furhat-specific information overlay
                 cv2.putText(frame, "FURHAT MULTIMODAL EMOTION RECOGNITION", 
                            (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 255), 2)
-                cv2.putText(frame, "Camera FER + Furhat TER | Speak to robot when active", 
+                cv2.putText(frame, "Camera FER + Furhat TER | Robot responds to facial expressions and speech", 
                            (50, 290), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
-                cv2.putText(frame, f"Robot IP: {self.furhat_ip} | Camera: {self.camera_id}", 
+                cv2.putText(frame, f"Robot IP: {self.furhat_ip} | Camera: {self.camera_id} | FER Responses: Enabled", 
                            (50, 320), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
                 
                 # Display frame
@@ -1454,6 +1539,8 @@ Examples:
   python furhat_multimodal_emotion_inference.py --fusion confidence_based          # Change fusion strategy
   python furhat_multimodal_emotion_inference.py --fusion formula_based             # Use formula-based fusion
   python furhat_multimodal_emotion_inference.py --no_robot_responses               # Disable robot responses
+  python furhat_multimodal_emotion_inference.py --fer_response_threshold 0.8       # Higher FER confidence needed
+  python furhat_multimodal_emotion_inference.py --fer_stability_frames 10          # More stable frames required
         """
     )
     
@@ -1505,6 +1592,20 @@ Examples:
         help='Disable robot emotional responses (default: responses enabled)'
     )
     
+    parser.add_argument(
+        '--fer_response_threshold', 
+        type=float, 
+        default=0.6,
+        help='Minimum confidence threshold for FER-triggered robot responses (default: 0.6)'
+    )
+    
+    parser.add_argument(
+        '--fer_stability_frames', 
+        type=int, 
+        default=5,
+        help='Number of consecutive frames needed for stable FER emotion before robot response (default: 5)'
+    )
+    
     args = parser.parse_args()
     
     # Print header
@@ -1522,7 +1623,9 @@ Examples:
             furhat_ip=args.furhat_ip,
             camera_id=args.camera_id,
             fusion_strategy=args.fusion,
-            enable_robot_responses=not args.no_robot_responses
+            enable_robot_responses=not args.no_robot_responses,
+            fer_response_threshold=args.fer_response_threshold,
+            fer_stability_frames=args.fer_stability_frames
         )
         
         # Run the system
