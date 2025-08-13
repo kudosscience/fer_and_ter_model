@@ -78,10 +78,10 @@ FUSION_WEIGHTS = {
 # These would typically be derived from validation data
 MODEL_PERFORMANCE = {
     'fer': {
-        'accuracy': 0.73,  # Overall model accuracy
+        'accuracy': 0.6441,  # Overall model accuracy
         'recall': {        # Per-emotion recall scores
-            'angry': 0.71, 'disgust': 0.68, 'fear': 0.65, 'happy': 0.84,
-            'sad': 0.70, 'surprise': 0.75, 'neutral': 0.78
+            'angry': 0.5762, 'disgust': 0.2883, 'fear': 0.3467, 'happy': 0.8839,
+            'sad': 0.5445, 'surprise': 0.7690, 'neutral': 0.6472
         }
     },
     'ter': {
