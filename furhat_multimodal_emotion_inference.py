@@ -85,10 +85,10 @@ MODEL_PERFORMANCE = {
         }
     },
     'ter': {
-        'accuracy': 0.79,  # Overall model accuracy  
+        'accuracy': 0.9545,  # Overall model accuracy  
         'recall': {        # Per-emotion recall scores
-            'angry': 0.76, 'disgust': 0.72, 'fear': 0.69, 'happy': 0.87,
-            'sad': 0.74, 'surprise': 0.71, 'neutral': 0.82
+            'angry': 0.9091, 'disgust': 0.9000, 'fear': 0.9375, 'happy': 0.9813,
+            'sad': 0.9657, 'surprise': 0.7273, 'neutral': 1.000
         }
     }
 }
