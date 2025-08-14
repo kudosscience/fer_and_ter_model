@@ -501,7 +501,7 @@ class FurhatMultimodalEmotionInference:
         print("🔄 Loading FER model...")
         
         if model_path is None:
-            model_path = 'fer2013_final_model.pth'
+            model_path = 'models/fer2013_final_model.pth'
         
         if not os.path.exists(model_path):
             print(f"❌ FER model not found: {model_path}")
@@ -549,9 +549,8 @@ class FurhatMultimodalEmotionInference:
             else:
                 # Try to find model in current directory
                 potential_paths = [
-                    './ter_distilbert_model',
-                    './ter-model',
-                    './models/ter_distilbert_model'
+                    './models/ter_distilbert_model',
+                    './ter_distilbert_model'
                 ]
                 
                 model_dir = None
@@ -1548,7 +1547,7 @@ Examples:
         '--fer_model', 
         type=str, 
         default=None,
-        help='Path to FER model file (default: fer2013_final_model.pth)'
+        help='Path to FER model file (default: models/fer2013_final_model.pth)'
     )
     
     parser.add_argument(

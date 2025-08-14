@@ -6,7 +6,11 @@ Shows basic usage and example scenarios
 
 import sys
 import time
+import os
 from datetime import datetime
+
+# Add project root to Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def demo_basic_usage():
     """Demonstrate basic usage of the multimodal system"""
@@ -18,13 +22,13 @@ def demo_basic_usage():
     print()
     
     print("🚀 Basic Usage:")
-    print("   python multimodal_emotion_inference.py")
+    print("   python src/multimodal/multimodal_emotion_inference.py")
     print()
     
     print("⚙️  With Custom Options:")
-    print("   python multimodal_emotion_inference.py \\")
-    print("       --fer_model ./my_fer_model.pth \\")
-    print("       --ter_model ./my_ter_model \\")
+    print("   python src/multimodal/multimodal_emotion_inference.py \\")
+    print("       --fer_model ./models/fer2013_final_model.pth \\")
+    print("       --ter_model ./models/ter_distilbert_model \\")
     print("       --device cuda \\")
     print("       --fusion confidence_based")
     print()

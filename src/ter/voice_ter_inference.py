@@ -118,9 +118,8 @@ class VoiceTERInference:
             else:
                 # Try to find model in current directory
                 potential_paths = [
-                    './ter_distilbert_model',
-                    './ter-model',
-                    './models/ter_distilbert_model'
+                    './models/ter_distilbert_model',
+                    './ter_distilbert_model'
                 ]
                 
                 model_dir = None

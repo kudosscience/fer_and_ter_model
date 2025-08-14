@@ -11,6 +11,9 @@ import cv2
 import numpy as np
 from PIL import Image
 
+# Add project root to Python path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 def test_requirements():
     """Test if all required packages are installed"""
     print("🧪 Testing package imports...")
@@ -96,7 +99,7 @@ def test_fer_model():
     """Test FER model loading"""
     print("\n🧪 Testing FER model...")
     
-    model_path = "fer2013_final_model.pth"
+    model_path = "models/fer2013_final_model.pth"
     if not os.path.exists(model_path):
         print(f"⚠️  FER model not found: {model_path}")
         return False
@@ -104,7 +107,7 @@ def test_fer_model():
     try:
         # Import the model class from our script
         sys.path.append('.')
-        from multimodal_emotion_inference import EmotionCNN
+        from src.multimodal.multimodal_emotion_inference import EmotionCNN
         
         # Load model
         model = EmotionCNN(num_classes=7, dropout_rate=0.5)
@@ -136,9 +139,8 @@ def test_ter_model():
     print("\n🧪 Testing TER model...")
     
     model_dirs = [
-        "./ter_distilbert_model",
-        "./ter-model",
-        "./models/ter_distilbert_model"
+        "./models/ter_distilbert_model",
+        "./ter_distilbert_model"
     ]
     
     model_dir = None

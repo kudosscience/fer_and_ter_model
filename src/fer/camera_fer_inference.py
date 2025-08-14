@@ -424,8 +424,8 @@ def main():
     parser.add_argument(
         '--model_path', 
         type=str, 
-        default='fer2013_final_model.pth',
-        help='Path to the trained model file (default: fer2013_final_model.pth)'
+        default='models/fer2013_final_model.pth',
+        help='Path to the trained model file (default: models/fer2013_final_model.pth)'
     )
     parser.add_argument(
         '--camera_id', 
@@ -447,7 +447,7 @@ def main():
     if not os.path.exists(args.model_path):
         print(f"❌ Model file not found: {args.model_path}")
         print("Please ensure the trained model file is in the current directory")
-        print("Expected file: fer2013_final_model.pth")
+        print("Expected file: models/fer2013_final_model.pth")
         sys.exit(1)
     
     # Create and run inference system

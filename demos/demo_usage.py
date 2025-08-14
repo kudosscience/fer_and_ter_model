@@ -9,6 +9,8 @@ import os
 
 # Add current directory to path to import our modules
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Add project root to Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def show_usage_examples():
     """Show different ways to use the camera inference script"""
@@ -16,22 +18,22 @@ def show_usage_examples():
     print("=" * 50)
     
     print("\n1. Basic usage (auto-detect camera and device):")
-    print("   python camera_fer_inference.py")
+    print("   python src/fer/camera_fer_inference.py")
     
     print("\n2. Use specific camera ID:")
-    print("   python camera_fer_inference.py --camera_id 1")
+    print("   python src/fer/camera_fer_inference.py --camera_id 1")
     
     print("\n3. Use specific model file:")
-    print("   python camera_fer_inference.py --model_path my_custom_model.pth")
+    print("   python src/fer/camera_fer_inference.py --model_path my_custom_model.pth")
     
     print("\n4. Force CPU usage (disable GPU):")
-    print("   python camera_fer_inference.py --device cpu")
+    print("   python src/fer/camera_fer_inference.py --device cpu")
     
     print("\n5. Force CUDA usage:")
-    print("   python camera_fer_inference.py --device cuda")
+    print("   python src/fer/camera_fer_inference.py --device cuda")
     
     print("\n6. Combined options:")
-    print("   python camera_fer_inference.py --model_path fer2013_final_model.pth --camera_id 0 --device auto")
+    print("   python src/fer/camera_fer_inference.py --model_path models/fer2013_final_model.pth --camera_id 0 --device auto")
 
 def show_interactive_controls():
     """Show the interactive controls available during inference"""
@@ -54,7 +56,7 @@ def show_model_info():
     print("=" * 50)
     
     try:
-        from camera_fer_inference import EmotionCNN
+        from src.fer.camera_fer_inference import EmotionCNN
         import torch
         
         # Load the model to get info
@@ -159,7 +161,7 @@ def test_prerequisites():
             missing_packages.append(package)
     
     # Check model file
-    if os.path.exists('fer2013_final_model.pth'):
+    if os.path.exists('models/fer2013_final_model.pth'):
         print(f"✅ Model file    - fer2013_final_model.pth found")
     else:
         print(f"❌ Model file    - fer2013_final_model.pth (MISSING)")

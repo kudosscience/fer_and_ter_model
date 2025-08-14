@@ -1,0 +1,267 @@
+Metadata-Version: 2.4
+Name: emotion-recognition-system
+Version: 1.0.0
+Summary: Multimodal Emotion Recognition System with FER and TER capabilities
+Home-page: https://github.com/kudosscience/fer_and_ter_model
+Author: Henry Ward
+Author-email: henry.ward@kent.ac.uk
+Project-URL: Bug Reports, https://github.com/kudosscience/fer_and_ter_model/issues
+Project-URL: Source, https://github.com/kudosscience/fer_and_ter_model
+Project-URL: Documentation, https://github.com/kudosscience/fer_and_ter_model/blob/main/README.md
+Keywords: emotion recognition,facial expression recognition,text emotion recognition,multimodal ai,computer vision,natural language processing,machine learning,deep learning,pytorch,transformers
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: torch>=1.9.0
+Requires-Dist: torchvision>=0.10.0
+Requires-Dist: opencv-python>=4.5.0
+Requires-Dist: numpy>=1.21.0
+Requires-Dist: Pillow>=8.3.0
+Requires-Dist: transformers>=4.20.0
+Requires-Dist: scikit-learn>=1.0.0
+Requires-Dist: SpeechRecognition>=3.8.0
+Requires-Dist: pyaudio>=0.2.11
+Requires-Dist: tqdm>=4.64.0
+Requires-Dist: pandas>=1.5.0
+Provides-Extra: multimodal
+Requires-Dist: torch>=2.0.0; extra == "multimodal"
+Requires-Dist: torchvision>=0.10.0; extra == "multimodal"
+Requires-Dist: transformers>=4.21.0; extra == "multimodal"
+Requires-Dist: scikit-learn>=1.0.0; extra == "multimodal"
+Requires-Dist: numpy>=1.21.0; extra == "multimodal"
+Requires-Dist: opencv-python>=4.5.0; extra == "multimodal"
+Requires-Dist: Pillow>=8.0.0; extra == "multimodal"
+Requires-Dist: speechrecognition>=3.8.1; extra == "multimodal"
+Requires-Dist: pyaudio>=0.2.11; extra == "multimodal"
+Requires-Dist: wave>=0.0.2; extra == "multimodal"
+Requires-Dist: tqdm>=4.64.0; extra == "multimodal"
+Requires-Dist: pandas>=1.5.0; extra == "multimodal"
+Provides-Extra: furhat
+Requires-Dist: torch>=1.9.0; extra == "furhat"
+Requires-Dist: torchvision>=0.10.0; extra == "furhat"
+Requires-Dist: transformers>=4.20.0; extra == "furhat"
+Requires-Dist: scikit-learn>=1.0.0; extra == "furhat"
+Requires-Dist: numpy>=1.21.0; extra == "furhat"
+Requires-Dist: opencv-python>=4.5.0; extra == "furhat"
+Requires-Dist: Pillow>=8.3.0; extra == "furhat"
+Requires-Dist: SpeechRecognition>=3.8.0; extra == "furhat"
+Requires-Dist: pyaudio>=0.2.11; extra == "furhat"
+Requires-Dist: furhat-remote-api>=1.0.0; extra == "furhat"
+Requires-Dist: argparse; extra == "furhat"
+Requires-Dist: pickle5; python_version < "3.8" and extra == "furhat"
+Requires-Dist: datetime; extra == "furhat"
+Requires-Dist: threading; extra == "furhat"
+Requires-Dist: queue; extra == "furhat"
+Requires-Dist: collections; extra == "furhat"
+Requires-Dist: io; extra == "furhat"
+Requires-Dist: base64; extra == "furhat"
+Requires-Dist: re; extra == "furhat"
+Requires-Dist: warnings; extra == "furhat"
+Requires-Dist: json; extra == "furhat"
+Requires-Dist: time; extra == "furhat"
+Requires-Dist: os; extra == "furhat"
+Requires-Dist: sys; extra == "furhat"
+Provides-Extra: voice-ter
+Requires-Dist: torch>=2.0.0; extra == "voice-ter"
+Requires-Dist: transformers>=4.21.0; extra == "voice-ter"
+Requires-Dist: scikit-learn>=1.0.0; extra == "voice-ter"
+Requires-Dist: numpy>=1.21.0; extra == "voice-ter"
+Requires-Dist: speechrecognition>=3.8.1; extra == "voice-ter"
+Requires-Dist: pyaudio>=0.2.11; extra == "voice-ter"
+Requires-Dist: wave>=0.0.2; extra == "voice-ter"
+Requires-Dist: tqdm>=4.64.0; extra == "voice-ter"
+Requires-Dist: pandas>=1.5.0; extra == "voice-ter"
+Provides-Extra: camera-inference
+Requires-Dist: torch>=1.9.0; extra == "camera-inference"
+Requires-Dist: torchvision>=0.10.0; extra == "camera-inference"
+Requires-Dist: opencv-python>=4.5.0; extra == "camera-inference"
+Requires-Dist: numpy>=1.21.0; extra == "camera-inference"
+Requires-Dist: Pillow>=8.0.0; extra == "camera-inference"
+Requires-Dist: tqdm>=4.62.0; extra == "camera-inference"
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=2.0.0; extra == "dev"
+Requires-Dist: black>=21.0.0; extra == "dev"
+Requires-Dist: isort>=5.0.0; extra == "dev"
+Requires-Dist: flake8>=3.8.0; extra == "dev"
+Requires-Dist: mypy>=0.812; extra == "dev"
+Provides-Extra: all
+Requires-Dist: json; extra == "all"
+Requires-Dist: sys; extra == "all"
+Requires-Dist: Pillow>=8.3.0; extra == "all"
+Requires-Dist: isort>=5.0.0; extra == "all"
+Requires-Dist: os; extra == "all"
+Requires-Dist: torch>=2.0.0; extra == "all"
+Requires-Dist: pytest>=6.0.0; extra == "all"
+Requires-Dist: time; extra == "all"
+Requires-Dist: pyaudio>=0.2.11; extra == "all"
+Requires-Dist: warnings; extra == "all"
+Requires-Dist: opencv-python>=4.5.0; extra == "all"
+Requires-Dist: base64; extra == "all"
+Requires-Dist: queue; extra == "all"
+Requires-Dist: torch>=1.9.0; extra == "all"
+Requires-Dist: tqdm>=4.64.0; extra == "all"
+Requires-Dist: mypy>=0.812; extra == "all"
+Requires-Dist: tqdm>=4.62.0; extra == "all"
+Requires-Dist: numpy>=1.21.0; extra == "all"
+Requires-Dist: speechrecognition>=3.8.1; extra == "all"
+Requires-Dist: threading; extra == "all"
+Requires-Dist: furhat-remote-api>=1.0.0; extra == "all"
+Requires-Dist: SpeechRecognition>=3.8.0; extra == "all"
+Requires-Dist: flake8>=3.8.0; extra == "all"
+Requires-Dist: pandas>=1.5.0; extra == "all"
+Requires-Dist: wave>=0.0.2; extra == "all"
+Requires-Dist: argparse; extra == "all"
+Requires-Dist: pytest-cov>=2.0.0; extra == "all"
+Requires-Dist: datetime; extra == "all"
+Requires-Dist: scikit-learn>=1.0.0; extra == "all"
+Requires-Dist: torchvision>=0.10.0; extra == "all"
+Requires-Dist: re; extra == "all"
+Requires-Dist: black>=21.0.0; extra == "all"
+Requires-Dist: transformers>=4.20.0; extra == "all"
+Requires-Dist: Pillow>=8.0.0; extra == "all"
+Requires-Dist: transformers>=4.21.0; extra == "all"
+Requires-Dist: pickle5; python_version < "3.8" and extra == "all"
+Requires-Dist: collections; extra == "all"
+Requires-Dist: io; extra == "all"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: project-url
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# Facial and Textual Emotion Recognition System
+
+A comprehensive emotion recognition system that combines facial emotion recognition (FER) and textual emotion recognition (TER) with multimodal fusion capabilities and Furhat robot integration.
+
+## Project Structure
+
+```text
+fer_and_ter_model/
+├── src/                          # Source code
+│   ├── fer/                      # Facial Emotion Recognition
+│   │   └── camera_fer_inference.py
+│   ├── ter/                      # Textual Emotion Recognition  
+│   │   ├── voice_ter_inference.py
+│   │   └── setup_voice_ter.py
+│   ├── multimodal/               # Multimodal Fusion
+│   │   └── multimodal_emotion_inference.py
+│   ├── furhat/                   # Furhat Robot Integration
+│   │   └── furhat_multimodal_emotion_inference.py
+│   └── utils/                    # Shared utilities
+├── models/                       # Trained models
+│   ├── fer2013_final_model.pth
+│   └── ter_distilbert_model/
+├── datasets/                     # Dataset files
+│   └── multimodal_emotion_dataset.json
+├── notebooks/                    # Jupyter notebooks
+│   ├── fer2013_model_training.ipynb
+│   ├── multimodal_emotion_fusion.ipynb
+│   ├── multimodal_emotion_recognition.ipynb
+│   └── textual_emotion_recognition_distilbert.ipynb
+├── tests/                        # Test scripts
+│   ├── test_corrected_formula.py
+│   ├── test_fer_model.py
+│   ├── test_formula_fusion.py
+│   ├── test_furhat_integration.py
+│   └── test_multimodal_system.py
+├── demos/                        # Demo scripts
+│   ├── demo_furhat_usage.py
+│   ├── demo_multimodal_usage.py
+│   ├── demo_usage.py
+│   └── demo_voice_ter.py
+├── docs/                         # Documentation
+│   ├── DATASET_SETUP.md
+│   ├── FER_PROJECT_SUMMARY.md
+│   ├── FURHAT_INTEGRATION_SUMMARY.md
+│   ├── IMPLEMENTATION_SUMMARY.md
+│   ├── JUNIE.md
+│   └── README_*.md files
+├── requirements/                 # Requirements files
+│   ├── requirements_backup.txt
+│   ├── requirements_camera_inference.txt
+│   ├── requirements_furhat.txt
+│   ├── requirements_multimodal.txt
+│   └── requirements_voice_ter.txt
+└── README.md                     # This file
+```
+
+## Quick Start
+
+1. **Install dependencies** for your specific use case:
+   - For FER: `pip install -r requirements/requirements_camera_inference.txt`
+   - For TER: `pip install -r requirements/requirements_voice_ter.txt`
+   - For Multimodal: `pip install -r requirements/requirements_multimodal.txt`
+   - For Furhat: `pip install -r requirements/requirements_furhat.txt`
+
+2. **Run demos**:
+
+   ```bash
+   python demos/demo_usage.py           # Basic FER demo
+   python demos/demo_voice_ter.py       # TER demo
+   python demos/demo_multimodal_usage.py # Multimodal demo
+   python demos/demo_furhat_usage.py    # Furhat integration demo
+   ```
+
+3. **Run tests**:
+
+   ```bash
+   python tests/test_fer_model.py
+   python tests/test_multimodal_system.py
+   ```
+
+## Components
+
+### FER (Facial Emotion Recognition)
+
+- Real-time camera-based emotion detection
+- CNN model trained on FER2013 dataset
+- Supports 7 emotion classes
+
+### TER (Textual Emotion Recognition)
+
+- Voice-to-text emotion recognition
+- DistilBERT-based model
+- Supports multiple emotion categories
+
+### Multimodal Fusion
+
+- Combines FER and TER outputs
+- Multiple fusion strategies available
+- Improved accuracy through multi-modal approach
+
+### Furhat Integration
+
+- Social robot platform integration
+- Real-time emotion feedback
+- Interactive emotion recognition system
+
+## Documentation
+
+Detailed documentation for each component can be found in the `docs/` directory:
+
+- `FER_PROJECT_SUMMARY.md` - FER system overview
+- `FURHAT_INTEGRATION_SUMMARY.md` - Furhat integration details
+- `IMPLEMENTATION_SUMMARY.md` - Technical implementation details
+
+## Development
+
+The project uses a modular structure where each component is self-contained in its respective directory under `src/`. All modules are properly packaged with `__init__.py` files for easy importing.

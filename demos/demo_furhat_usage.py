@@ -6,6 +6,10 @@ Shows how to use the system with different configurations.
 
 import sys
 import time
+import os
+
+# Add project root to Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def print_header():
     """Print demo header"""
@@ -20,7 +24,7 @@ def demo_basic_usage():
     print("-" * 40)
     
     try:
-        from furhat_multimodal_emotion_inference import FurhatMultimodalEmotionInference
+        from src.furhat.furhat_multimodal_emotion_inference import FurhatMultimodalEmotionInference
         
         print("Creating system instance...")
         system = FurhatMultimodalEmotionInference(
@@ -61,7 +65,7 @@ def demo_text_emotion_prediction():
     print("-" * 40)
     
     try:
-        from furhat_multimodal_emotion_inference import FurhatMultimodalEmotionInference
+        from src.furhat.furhat_multimodal_emotion_inference import FurhatMultimodalEmotionInference
         
         # Create system (will show connection warnings - that's OK)
         system = FurhatMultimodalEmotionInference(
@@ -105,7 +109,7 @@ def demo_robot_commands():
     print("-" * 40)
     
     try:
-        from furhat_multimodal_emotion_inference import EMOTION_GESTURES, EMOTION_RESPONSES
+        from src.furhat.furhat_multimodal_emotion_inference import EMOTION_GESTURES, EMOTION_RESPONSES
         
         print("🤖 Emotion to Gesture Mapping:")
         for emotion, gesture in EMOTION_GESTURES.items():
@@ -128,22 +132,22 @@ def demo_usage_examples():
     
     examples = [
         ("Basic usage with local robot", 
-         "python furhat_multimodal_emotion_inference.py"),
+         "python src/furhat/furhat_multimodal_emotion_inference.py"),
         
         ("Connect to remote robot", 
-         "python furhat_multimodal_emotion_inference.py --furhat_ip 192.168.1.100"),
+         "python src/furhat/furhat_multimodal_emotion_inference.py --furhat_ip 192.168.1.100"),
         
         ("Use custom models", 
-         "python furhat_multimodal_emotion_inference.py --fer_model ./my_model.pth --ter_model ./my_ter_model"),
+         "python src/furhat/furhat_multimodal_emotion_inference.py --fer_model ./models/fer2013_final_model.pth --ter_model ./models/ter_distilbert_model"),
         
         ("Detection only (no robot responses)", 
-         "python furhat_multimodal_emotion_inference.py --no_robot_responses"),
+         "python src/furhat/furhat_multimodal_emotion_inference.py --no_robot_responses"),
         
         ("Use weighted fusion strategy", 
-         "python furhat_multimodal_emotion_inference.py --fusion weighted_average"),
+         "python src/furhat/furhat_multimodal_emotion_inference.py --fusion weighted_average"),
         
         ("Force CPU usage", 
-         "python furhat_multimodal_emotion_inference.py --device cpu")
+         "python src/furhat/furhat_multimodal_emotion_inference.py --device cpu")
     ]
     
     print("💡 Command Line Examples:")
@@ -201,7 +205,7 @@ def main():
     print(f"\n🎯 Ready to use Furhat Multimodal Emotion Recognition!")
     print("\n📋 Quick Start:")
     print("1. Ensure Furhat robot is connected and Remote API is enabled")
-    print("2. Run: python furhat_multimodal_emotion_inference.py --furhat_ip <robot_ip>")
+    print("2. Run: python src/furhat/furhat_multimodal_emotion_inference.py --furhat_ip <robot_ip>")
     print("3. Press 'V' to activate voice capture")
     print("4. Speak to the robot and watch it respond emotionally!")
     

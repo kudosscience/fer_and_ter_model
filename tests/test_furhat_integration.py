@@ -7,6 +7,9 @@ Tests the core functionality without requiring an actual Furhat robot connection
 import sys
 import os
 
+# Add project root to Python path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 def test_imports():
     """Test all required imports"""
     print("🔍 Testing imports...")
@@ -40,7 +43,7 @@ def test_imports():
         return False
     
     try:
-        import furhat_multimodal_emotion_inference as fmei
+        import src.furhat.furhat_multimodal_emotion_inference as fmei
         print("✅ Furhat multimodal script importable")
     except ImportError as e:
         print(f"❌ Furhat multimodal script import failed: {e}")
@@ -55,7 +58,7 @@ def test_model_files():
     all_found = True
     
     # Check FER model
-    fer_model_path = "fer2013_final_model.pth"
+    fer_model_path = "models/fer2013_final_model.pth"
     if os.path.exists(fer_model_path):
         print(f"✅ FER model found: {fer_model_path}")
     else:
@@ -63,7 +66,7 @@ def test_model_files():
         all_found = False
     
     # Check TER model directory
-    ter_model_path = "ter_distilbert_model"
+    ter_model_path = "models/ter_distilbert_model"
     if os.path.exists(ter_model_path):
         print(f"✅ TER model directory found: {ter_model_path}")
         
@@ -88,7 +91,7 @@ def test_class_initialization():
     
     try:
         # Import the class
-        from furhat_multimodal_emotion_inference import FurhatMultimodalEmotionInference
+        from src.furhat.furhat_multimodal_emotion_inference import FurhatMultimodalEmotionInference
         
         print("✅ Class import successful")
         
@@ -108,7 +111,7 @@ def test_class_initialization():
         print(f"✅ Emotion colors defined: {len(system.emotion_colors)} colors")
         
         # Import the constant from the module
-        from furhat_multimodal_emotion_inference import EMOTION_GESTURES
+        from src.furhat.furhat_multimodal_emotion_inference import EMOTION_GESTURES
         print(f"✅ Emotion gestures defined: {len(EMOTION_GESTURES)} gestures")
         
         return True
@@ -122,7 +125,7 @@ def test_emotion_fusion():
     print("\n🔍 Testing emotion fusion...")
     
     try:
-        from furhat_multimodal_emotion_inference import FurhatMultimodalEmotionInference
+        from src.furhat.furhat_multimodal_emotion_inference import FurhatMultimodalEmotionInference
         
         # Create a minimal instance for testing
         system = FurhatMultimodalEmotionInference.__new__(FurhatMultimodalEmotionInference)

@@ -11,12 +11,16 @@ import numpy as np
 from PIL import Image
 import torchvision.transforms as transforms
 import os
+import sys
+
+# Add project root to Python path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import the model class from the main script
-from camera_fer_inference import EmotionCNN
+from src.fer.camera_fer_inference import EmotionCNN
 
 
-def test_model_loading(model_path='fer2013_final_model.pth'):
+def test_model_loading(model_path='models/fer2013_final_model.pth'):
     """Test model loading functionality"""
     print("🧪 Testing FER Model Loading...")
     

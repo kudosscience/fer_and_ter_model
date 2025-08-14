@@ -1,0 +1,5 @@
+[console_scripts]
+fer-camera = src.fer.camera_fer_inference:main
+furhat-emotion = src.furhat.furhat_multimodal_emotion_inference:main
+multimodal-emotion = src.multimodal.multimodal_emotion_inference:main
+ter-voice = src.ter.voice_ter_inference:main

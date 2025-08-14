@@ -7,10 +7,12 @@ import sys
 import os
 
 # Add the current directory to the path so we can import the main module
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(__file__))
+# Add project root to Python path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import the main class
-from furhat_multimodal_emotion_inference import MODEL_PERFORMANCE
+from src.furhat.furhat_multimodal_emotion_inference import MODEL_PERFORMANCE
 
 def test_corrected_formula_fusion():
     """Test the corrected formula-based fusion strategy"""
