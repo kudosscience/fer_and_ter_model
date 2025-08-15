@@ -352,4 +352,4 @@ This project is part of academic research. Please cite appropriately if used in 
 
 ---
 
-For questions or issues, please create an issue in the repository or contact the development team.
+For questions or issues, please create an issue in the repository or contact me.

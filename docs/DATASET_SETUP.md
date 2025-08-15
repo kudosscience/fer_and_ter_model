@@ -84,7 +84,7 @@ The system supports 6 emotions:
 3. **Test Split**: Keep 10-20% of data for final testing
 4. **Validation Split**: Use 10-15% for hyperparameter tuning
 
-## 📚 Popular Datasets You Can Use
+## 📚 Popular Datasets You Could Use
 
 ### Facial Emotion Recognition:
 - **FER2013** - Classic facial emotion dataset

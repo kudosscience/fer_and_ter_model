@@ -133,6 +133,7 @@ python furhat_multimodal_emotion_inference.py \
 ### Fusion Strategies
 1. **Weighted Average**: Combines FER (60%) and TER (40%) with confidence boosting for agreement
 2. **Confidence Based**: Selects the most confident prediction with agreement boosting
+3. **Formula Based**: Combines FER and TER predicitions according to a formula.
 
 ### Robot Behavior
 - **Gesture Mapping**: Each emotion maps to specific Furhat gestures

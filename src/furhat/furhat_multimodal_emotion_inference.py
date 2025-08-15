@@ -19,7 +19,7 @@ Features:
 - Statistics and history tracking
 - Configurable fusion strategies
 
-Author: Generated for FER and TER Model Project
+Author: Henry Ward
 Date: August 2025
 """
 

@@ -7,7 +7,7 @@ I've successfully created a complete integration of a multimodal emotion recogni
 ### 🎯 Main Files
 
 1. **`furhat_multimodal_emotion_inference.py`** - Main integration script
-   - Complete copy of your multimodal system adapted for Furhat
+   - Complete copy of the multimodal system adapted for Furhat
    - Uses Furhat Remote API for robot communication
    - Integrates robot's microphone for speech input
    - Provides emotional responses through robot gestures, speech, and LEDs
@@ -42,7 +42,7 @@ I've successfully created a complete integration of a multimodal emotion recogni
 ### Multimodal Emotion Recognition
 - **Facial Expression Recognition (FER)**: Same CNN model as original
 - **Textual Emotion Recognition (TER)**: Same DistilBERT model as original
-- **Emotion Fusion**: Both weighted average and confidence-based strategies
+- **Emotion Fusion**: Both weighted average, confidence-based and formula-based strategies
 - **Real-time Processing**: Continuous emotion monitoring
 
 ### Robot Interactions
@@ -88,7 +88,7 @@ The system maps detected emotions to robot behaviors:
 
 ### Configuration Options
 - **Robot IP**: Configurable robot address
-- **Fusion Strategy**: Weighted average or confidence-based
+- **Fusion Strategy**: Weighted average, confidence-based or formula-based
 - **Response Control**: Enable/disable robot emotional responses
 - **Model Paths**: Custom FER and TER model locations
 - **Device Selection**: CPU or CUDA for inference
@@ -152,4 +152,4 @@ The system successfully recognizes emotions from text with high accuracy:
 4. **Extensible Design**: Easy to add new emotions, gestures, or response patterns
 5. **Robust Implementation**: Handles network issues and robot unavailability gracefully
 
-The integration successfully transforms your multimodal emotion recognition research into a practical, interactive robotic application that can engage with users in an emotionally intelligent way!
+This integration successfully transforms my multimodal emotion recognition research into a practical, interactive robotic application that can engage with users in an emotionally intelligent way!

@@ -1,10 +1,8 @@
 # Camera FER Inference - Project Summary
 
-## 🎯 What Was Created
-
 This project successfully creates a real-time facial expression recognition system that uses camera input to detect emotions using the FER2013 CNN model from your Jupyter notebook.
 
-### 📁 Files Created
+### 📁 Files
 
 1. **`camera_fer_inference.py`** - Main camera inference script
 2. **`test_fer_model.py`** - Model testing and validation script  
@@ -14,11 +12,11 @@ This project successfully creates a real-time facial expression recognition syst
 
 ## 🧠 Model Integration
 
-The script successfully integrates your trained FER model with these key features:
+The script successfully integrates a trained FER model with these key features:
 
-- **Model Architecture**: Exactly matches your notebook's `EmotionCNN` class
+- **Model Architecture**: Exactly matches the notebook's `EmotionCNN` class
 - **Checkpoint Loading**: Properly handles the saved model format with metadata
-- **Preprocessing**: Uses the same transforms as your training pipeline
+- **Preprocessing**: Uses the same transforms as the training pipeline
 - **7 Emotion Classes**: Angry, Disgust, Fear, Happy, Sad, Surprise, Neutral
 
 ### 📊 Model Performance
@@ -109,7 +107,7 @@ The project includes comprehensive testing:
 
 ## 🎯 Key Achievements
 
-1. **Perfect Model Integration**: Successfully extracted and implemented the exact CNN architecture from your notebook
+1. **Perfect Model Integration**: Successfully extracts and implements the exact CNN architecture from the associated Colab notebook
 
 2. **Robust Checkpoint Loading**: Handles the complex checkpoint format with metadata (model_state_dict, optimizer_state_dict, etc.)
 
@@ -148,8 +146,6 @@ The system recognizes 7 emotions with visual indicators:
 
 ## 🔍 Next Steps
 
-The camera inference system is ready to use! Here's what you can do:
-
 ### Immediate Use
 ```bash
 python camera_fer_inference.py
@@ -180,5 +176,3 @@ python camera_fer_inference.py
 - Ensure good lighting conditions
 - Keep faces clearly visible
 - Close unnecessary applications
-
-The system is production-ready and can be used immediately for real-time emotion recognition applications!

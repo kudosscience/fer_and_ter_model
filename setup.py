@@ -66,7 +66,7 @@ setup(
     name='emotion-recognition-system',
     version='1.0.0',
     author='Henry Ward',
-    author_email='henry.ward@kent.ac.uk',
+    author_email='45144290+kudosscience@users.noreply.github.com',
     description='Multimodal Emotion Recognition System with FER and TER capabilities',
     long_description=read_readme(),
     long_description_content_type='text/markdown',

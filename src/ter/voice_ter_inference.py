@@ -13,7 +13,7 @@ Features:
 - Interactive mode for continuous voice input
 - Support for different audio input devices
 
-Author: Generated for FER and TER Model Project
+Author: Henry Ward
 Date: August 2025
 """
 
