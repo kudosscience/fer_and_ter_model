@@ -1,7 +1,7 @@
 # Voice-based Textual Emotion Recognition Requirements
 # Core ML and NLP packages
 torch>=2.0.0
-transformers>=4.21.0
+transformers>=5.0.0rc1
 scikit-learn>=1.0.0
 numpy>=1.21.0
 
