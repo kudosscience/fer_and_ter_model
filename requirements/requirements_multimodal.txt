@@ -4,7 +4,7 @@
 # Core ML and Deep Learning
 torch>=2.0.0
 torchvision>=0.10.0
-transformers>=4.21.0
+transformers>=5.0.0rc1
 scikit-learn>=1.0.0
 numpy>=1.21.0
 
