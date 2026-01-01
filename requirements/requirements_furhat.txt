@@ -4,7 +4,7 @@
 # Core ML and AI packages
 torch>=1.9.0
 torchvision>=0.10.0
-transformers>=4.20.0
+transformers>=5.0.0rc1
 scikit-learn>=1.0.0
 numpy>=1.21.0
 
