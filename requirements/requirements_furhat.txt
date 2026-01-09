@@ -2,7 +2,7 @@
 # Based on multimodal emotion inference with Furhat Remote API integration
 
 # Core ML and AI packages
-torch>=1.9.0
+torch>=2.9.0
 torchvision>=0.10.0
 transformers>=4.20.0
 scikit-learn>=1.0.0
@@ -34,3 +34,4 @@ json
 time
 os
 sys
+urllib3>=2.6.3 # not directly required, pinned by Snyk to avoid a vulnerability
