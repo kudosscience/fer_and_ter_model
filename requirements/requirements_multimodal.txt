@@ -50,3 +50,4 @@ collections  # Built-in with Python
 # macOS users:
 # brew install portaudio
 # pip install pyaudio
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
